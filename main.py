@@ -228,7 +228,7 @@ def transcribe_audio_func(
     # Start transcription using DashScope SDK
     logger.info("Starting transcription...")
     task_response = Transcription.async_call(
-        model="paraformer-v2",
+        model="fun-asr",
         file_urls=[oss_url],
         language_hints=language_hints,
     )
