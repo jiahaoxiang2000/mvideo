@@ -555,18 +555,25 @@ def process(
 @app.command()
 def add_subtitles(
     input_video: str,
-    subtitle_file: str,
+    subtitle_file: Optional[str] = typer.Argument(
+        None, help="Subtitle file (default: same path as video, .srt extension)"
+    ),
     output_video: Optional[str] = typer.Option(None, help="Output video filename"),
     gpu: bool = typer.Option(True, help="Use GPU acceleration"),
 ):
-    """Add subtitles to video with Source Han font."""
-    if not output_video:
-        filename, ext = os.path.splitext(input_video)
-        output_video = f"{filename}_with_subs{ext}"
-
+    """Add hardcoded subtitles to video with Source Han font."""
     if not os.path.exists(input_video):
         logger.error(f"Input video not found: {input_video}")
         sys.exit(1)
+
+    # Auto-generate subtitle path from input_video if not provided
+    if subtitle_file is None:
+        filename, _ = os.path.splitext(input_video)
+        subtitle_file = f"{filename}.srt"
+
+    if not output_video:
+        filename, ext = os.path.splitext(input_video)
+        output_video = f"{filename}_with_subs{ext}"
 
     if not os.path.exists(subtitle_file):
         logger.error(f"Subtitle file not found: {subtitle_file}")
@@ -588,27 +595,18 @@ def add_subtitles(
         "Alignment=2"
     )
 
-    # Escape style string for ffmpeg
-    # Note: In the original code it was just passed in f-string.
-    # But complex filters often need escaping.
-    # The original code: vf_filter = f"subtitles={subtitle_file}:force_style='{style}'"
-    # This looks correct for most cases.
-
     vf_filter = f"subtitles={subtitle_file}:force_style='{style}'"
 
-    cmd = ["ffmpeg"]
-    if gpu:
-        logger.info("Using GPU acceleration (NVIDIA NVENC)...")
-        cmd.extend(["-hwaccel", "cuda"])
-
-    cmd.extend(["-i", input_video, "-vf", vf_filter])
+    cmd = ["ffmpeg", "-i", input_video, "-vf", vf_filter]
 
     if gpu:
-        cmd.extend(["-c:v", "h264_nvenc", "-preset", "p4", "-cq", "23"])
+        # Use fastest NVENC preset for speed
+        cmd.extend(["-c:v", "h264_nvenc", "-preset", "p1", "-cq", "28"])
     else:
-        cmd.extend(["-c:v", "libx264", "-preset", "medium", "-crf", "23"])
+        # Use ultrafast preset for CPU encoding
+        cmd.extend(["-c:v", "libx264", "-preset", "ultrafast", "-crf", "28"])
 
-    cmd.extend(["-c:a", "copy", output_video])
+    cmd.extend(["-c:a", "copy", "-y", output_video])
 
     try:
         subprocess.run(cmd, check=True)
