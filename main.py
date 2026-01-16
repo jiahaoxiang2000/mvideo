@@ -130,8 +130,10 @@ def get_oss_client() -> tuple[oss.Client, str]:
     return client, str(bucket_name)
 
 
-def upload_file_to_oss(file_path: str, object_key: str | None = None) -> str:
-    """Upload file to OSS and return the public URL."""
+def upload_file_to_oss(
+    file_path: str, object_key: str | None = None
+) -> tuple[str, str]:
+    """Upload file to OSS and return (object_key, public_url)."""
     client, bucket_name = get_oss_client()
 
     if object_key is None:
@@ -161,7 +163,7 @@ def upload_file_to_oss(file_path: str, object_key: str | None = None) -> str:
     public_url = f"https://{bucket_name}.{endpoint_host}/{object_key}"
 
     logger.success(f"File uploaded: {public_url}")
-    return public_url
+    return object_key, public_url
 
 
 def delete_oss_file(object_key: str) -> None:
@@ -222,45 +224,53 @@ def transcribe_audio_func(
 
     # Upload audio file to user's OSS bucket
     logger.info("Uploading audio file to OSS...")
-    oss_url = upload_file_to_oss(audio_file)
+    object_key, oss_url = upload_file_to_oss(audio_file)
     logger.info(f"Audio uploaded: {oss_url}")
 
-    # Start transcription using DashScope SDK
-    logger.info("Starting transcription...")
-    task_response = Transcription.async_call(
-        model="fun-asr",
-        file_urls=[oss_url],
-        language_hints=language_hints,
-    )
+    try:
+        # Start transcription using DashScope SDK
+        logger.info("Starting transcription...")
+        task_response = Transcription.async_call(
+            model="fun-asr",
+            file_urls=[oss_url],
+            language_hints=language_hints,
+        )
 
-    if task_response.status_code != HTTPStatus.OK:
-        logger.error(f"Failed to start transcription: {task_response.output.message}")
-        sys.exit(1)
+        if task_response.status_code != HTTPStatus.OK:
+            logger.error(
+                f"Failed to start transcription: {task_response.output.message}"
+            )
+            sys.exit(1)
 
-    logger.info(f"Task created: {task_response.output.task_id}")
+        logger.info(f"Task created: {task_response.output.task_id}")
 
-    # Wait for transcription to complete
-    logger.info("Waiting for transcription to complete...")
-    transcription_response = Transcription.wait(task=task_response.output.task_id)
+        # Wait for transcription to complete
+        logger.info("Waiting for transcription to complete...")
+        transcription_response = Transcription.wait(task=task_response.output.task_id)
 
-    if transcription_response.status_code != HTTPStatus.OK:
-        logger.error(f"Transcription failed: {transcription_response.output.message}")
-        sys.exit(1)
+        if transcription_response.status_code != HTTPStatus.OK:
+            logger.error(
+                f"Transcription failed: {transcription_response.output.message}"
+            )
+            sys.exit(1)
 
-    logger.success("Transcription completed successfully")
+        logger.success("Transcription completed successfully")
 
-    # Fetch transcription results
-    results = []
-    for transcription in transcription_response.output.get("results", []):
-        if transcription.get("subtask_status") == "SUCCEEDED":
-            url = transcription.get("transcription_url")
-            if url:
-                result = json.loads(request.urlopen(url).read().decode("utf8"))
-                results.append(result)
-        else:
-            logger.warning(f"Subtask failed: {transcription}")
+        # Fetch transcription results
+        results = []
+        for transcription in transcription_response.output.get("results", []):
+            if transcription.get("subtask_status") == "SUCCEEDED":
+                url = transcription.get("transcription_url")
+                if url:
+                    result = json.loads(request.urlopen(url).read().decode("utf8"))
+                    results.append(result)
+            else:
+                logger.warning(f"Subtask failed: {transcription}")
 
-    return results
+        return results
+    finally:
+        # Clean up OSS file after transcription completes
+        delete_oss_file(object_key)
 
 
 def generate_srt_from_transcription(transcription_results: list[dict]) -> str:
