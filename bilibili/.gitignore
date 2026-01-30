@@ -37,3 +37,4 @@ next-env.d.ts
 out/
 .env
 build
+*-lock.json
