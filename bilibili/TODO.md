@@ -78,10 +78,10 @@ Based on [ARCH.md](./ARCH.md)
 
 ### 3.3 Overlay System
 
-- [ ] Create base overlay component
-- [ ] Implement text overlay
-- [ ] Implement image overlay
-- [ ] Add overlay positioning and timing controls
+- [x] Create base overlay component
+- [x] Implement text overlay
+- [x] Implement image overlay
+- [x] Add overlay positioning and timing controls
 
 ## Phase 4: Studio UI
 

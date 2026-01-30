@@ -16,15 +16,35 @@ export const IntroCompositionProps = z.object({
   accentColor: z.string(),
 });
 
-export const OverlayItemProps = z.object({
+const OverlayBaseProps = z.object({
   id: z.string(),
-  type: z.enum(["title", "lower-third", "cta"]),
-  text: z.string(),
   startFrame: z.number(),
   durationInFrames: z.number(),
   x: z.number().optional(),
   y: z.number().optional(),
+  enterDurationInFrames: z.number().optional(),
+  exitDurationInFrames: z.number().optional(),
 });
+
+const TextOverlayProps = OverlayBaseProps.extend({
+  type: z.enum(["title", "lower-third", "cta", "text"]),
+  text: z.string(),
+});
+
+const ImageOverlayProps = OverlayBaseProps.extend({
+  type: z.literal("image"),
+  src: z.string(),
+  alt: z.string().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  objectFit: z.enum(["contain", "cover", "fill", "none", "scale-down"]).optional(),
+  borderRadius: z.number().optional(),
+});
+
+export const OverlayItemProps = z.discriminatedUnion("type", [
+  TextOverlayProps,
+  ImageOverlayProps,
+]);
 
 export const MainCompositionProps = z.object({
   videoSrc: z.string(),
