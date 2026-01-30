@@ -33,10 +33,10 @@ Based on [ARCH.md](./ARCH.md)
 
 **2.1 Ingestion Service:**
 
-- [ ] Create file upload/import endpoint
-- [ ] Implement metadata extraction (duration, fps, resolution, audio tracks)
-- [ ] Create Asset record management
-- [ ] Set up source file storage structure
+- [x] Create file upload/import endpoint
+- [x] Implement metadata extraction (duration, fps, resolution, audio tracks)
+- [x] Create Asset record management
+- [x] Set up source file storage structure
 
 **2.2 FFmpeg Integration:**
 
