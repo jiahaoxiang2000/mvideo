@@ -51,9 +51,34 @@ temp_*.wav
 temp_*.mp3
 temp_*.mp4
 
-# Environment variables
-.env
-.env.local
+# Node.js
+node_modules/
+package-lock.json
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Next.js
+.next/
+out/
+build/
+
+# Production
+dist/
+
+# Vercel
+.vercel/
+
+# Turborepo
+.turbo/
+
+# Testing
+coverage/
+
+# Environment variables (add more variations)
+.env*.local
 
 # OS
 .DS_Store
