@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // Icon components
 const FolderIcon = () => (
@@ -58,20 +58,50 @@ const ChevronRightIcon = () => (
 
 type AssetType = "video" | "audio" | "image" | "text";
 
-interface Asset {
+type AudioTrackInfo = {
+  index: number;
+  codec?: string;
+  channels?: number;
+  sampleRate?: number;
+};
+
+type MediaMetadata = {
+  durationSeconds: number | null;
+  fps: number | null;
+  width: number | null;
+  height: number | null;
+  audioTracks: AudioTrackInfo[];
+};
+
+type DerivedAssetRecord = {
+  thumbnailPaths?: string[];
+};
+
+type AssetRecord = {
+  id: string;
+  originalName: string;
+  sourcePath: string;
+  sizeBytes: number;
+  createdAt: string;
+  metadata: MediaMetadata;
+  derived?: DerivedAssetRecord;
+};
+
+type ResourceAsset = {
   id: string;
   name: string;
-  type: AssetType;
-  duration?: string;
-  size?: string;
-  thumbnail?: string;
-}
+  kind: AssetType;
+  durationLabel?: string;
+  sizeLabel?: string;
+  thumbnailUrl?: string;
+  record: AssetRecord;
+};
 
 interface AssetCategory {
   id: string;
   name: string;
   type: AssetType;
-  assets: Asset[];
+  assets: ResourceAsset[];
 }
 
 const getAssetIcon = (type: AssetType) => {
@@ -89,52 +119,102 @@ const getAssetIcon = (type: AssetType) => {
   }
 };
 
-// Demo data
-const demoCategories: AssetCategory[] = [
-  {
-    id: "video",
-    name: "Video",
-    type: "video",
-    assets: [
-      { id: "v1", name: "OBS_2026-01-25.mp4", type: "video", duration: "17:02", size: "1.2 GB" },
-      { id: "v2", name: "Intro_Template.mp4", type: "video", duration: "00:12", size: "45 MB" },
-      { id: "v3", name: "Outro_Template.mp4", type: "video", duration: "00:08", size: "32 MB" },
-    ],
-  },
-  {
-    id: "audio",
-    name: "Audio",
-    type: "audio",
-    assets: [
-      { id: "a1", name: "Background_Music.mp3", type: "audio", duration: "03:45", size: "8.2 MB" },
-      { id: "a2", name: "Normalized_Audio.wav", type: "audio", duration: "17:02", size: "180 MB" },
-    ],
-  },
-  {
-    id: "image",
-    name: "Images",
-    type: "image",
-    assets: [
-      { id: "i1", name: "Logo.png", type: "image", size: "256 KB" },
-      { id: "i2", name: "Subscribe_Button.png", type: "image", size: "128 KB" },
-      { id: "i3", name: "Thumbnail.jpg", type: "image", size: "512 KB" },
-    ],
-  },
-  {
-    id: "text",
-    name: "Text & Titles",
-    type: "text",
-    assets: [
-      { id: "t1", name: "Title Card", type: "text" },
-      { id: "t2", name: "Lower Third", type: "text" },
-      { id: "t3", name: "Auto SRT Subtitles", type: "text" },
-    ],
-  },
+const categoryDefinitions: Array<Pick<AssetCategory, "id" | "name" | "type">> = [
+  { id: "video", name: "Video", type: "video" },
+  { id: "audio", name: "Audio", type: "audio" },
+  { id: "image", name: "Images", type: "image" },
+  { id: "text", name: "Text & Titles", type: "text" },
 ];
 
+const VIDEO_EXTENSIONS = new Set([
+  ".mp4",
+  ".mov",
+  ".mkv",
+  ".webm",
+  ".avi",
+  ".m4v",
+]);
+const AUDIO_EXTENSIONS = new Set([".mp3", ".wav", ".aac", ".flac", ".m4a", ".ogg"]);
+const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"]);
+
+const getAssetKindFromRecord = (record: AssetRecord): AssetType => {
+  const extension = record.originalName
+    ? `.${record.originalName.split(".").pop()}`.toLowerCase()
+    : "";
+
+  if (VIDEO_EXTENSIONS.has(extension)) {
+    return "video";
+  }
+
+  if (AUDIO_EXTENSIONS.has(extension)) {
+    return "audio";
+  }
+
+  if (IMAGE_EXTENSIONS.has(extension)) {
+    return "image";
+  }
+
+  if (record.metadata.width && record.metadata.height) {
+    return "video";
+  }
+
+  if (record.metadata.audioTracks.length > 0) {
+    return "audio";
+  }
+
+  return "text";
+};
+
+const formatDuration = (durationSeconds?: number | null) => {
+  if (!durationSeconds || !Number.isFinite(durationSeconds)) {
+    return undefined;
+  }
+
+  const totalSeconds = Math.round(durationSeconds);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+};
+
+const formatBytes = (bytes: number) => {
+  if (!Number.isFinite(bytes)) {
+    return undefined;
+  }
+
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = bytes;
+  let unitIndex = 0;
+
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+
+  const precision = value >= 100 ? 0 : value >= 10 ? 1 : 2;
+  return `${value.toFixed(precision)} ${units[unitIndex]}`;
+};
+
+const buildThumbnailUrl = (record: AssetRecord, kind: AssetType) => {
+  if (record.derived?.thumbnailPaths?.length) {
+    return `/api/assets/${record.id}/thumbnails/0`;
+  }
+
+  if (kind === "image") {
+    return `/api/assets/${record.id}/source`;
+  }
+
+  return undefined;
+};
+
 interface ResourcesPanelProps {
-  onAssetSelect?: (asset: Asset) => void;
-  onAssetDragStart?: (asset: Asset) => void;
+  onAssetSelect?: (asset: ResourceAsset) => void;
+  onAssetDragStart?: (asset: ResourceAsset) => void;
 }
 
 export const ResourcesPanel = ({ onAssetSelect, onAssetDragStart }: ResourcesPanelProps) => {
@@ -143,6 +223,76 @@ export const ResourcesPanel = ({ onAssetSelect, onAssetDragStart }: ResourcesPan
   );
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [assetRecords, setAssetRecords] = useState<AssetRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isImporting, setIsImporting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadAssets = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/assets");
+      const payload = await response.json();
+
+      if (!response.ok || payload.type !== "success") {
+        throw new Error(payload.message ?? "Failed to load assets.");
+      }
+
+      setAssetRecords(payload.data ?? []);
+    } catch (error) {
+      setErrorMessage((error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadAssets();
+  }, [loadAssets]);
+
+  const handleImportClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (!files || files.length === 0) {
+        return;
+      }
+
+      setIsImporting(true);
+      setErrorMessage(null);
+
+      try {
+        for (const file of Array.from(files)) {
+          const formData = new FormData();
+          formData.append("file", file);
+
+          const response = await fetch("/api/ingestion/import", {
+            method: "POST",
+            body: formData,
+          });
+          const payload = await response.json();
+
+          if (!response.ok || payload.type !== "success") {
+            throw new Error(payload.message ?? "Failed to import asset.");
+          }
+        }
+
+        await loadAssets();
+      } catch (error) {
+        setErrorMessage((error as Error).message);
+      } finally {
+        setIsImporting(false);
+        event.target.value = "";
+      }
+    },
+    [loadAssets]
+  );
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories((prev) => {
@@ -156,23 +306,56 @@ export const ResourcesPanel = ({ onAssetSelect, onAssetDragStart }: ResourcesPan
     });
   };
 
-  const handleAssetClick = (asset: Asset) => {
+  const handleAssetClick = (asset: ResourceAsset) => {
     setSelectedAsset(asset.id);
     onAssetSelect?.(asset);
   };
 
-  const handleDragStart = (e: React.DragEvent, asset: Asset) => {
-    e.dataTransfer.setData("application/json", JSON.stringify(asset));
+  const handleDragStart = (e: React.DragEvent, asset: ResourceAsset) => {
+    const payload = JSON.stringify({
+      source: "resources",
+      record: asset.record,
+      kind: asset.kind,
+    });
+    e.dataTransfer.setData("application/vnd.mvideo.asset", payload);
+    e.dataTransfer.setData("application/json", payload);
     e.dataTransfer.effectAllowed = "copy";
     onAssetDragStart?.(asset);
   };
 
-  const filteredCategories = demoCategories.map((category) => ({
-    ...category,
-    assets: category.assets.filter((asset) =>
-      asset.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-  }));
+  const resources = useMemo<ResourceAsset[]>(() => {
+    return assetRecords.map((record) => {
+      const kind = getAssetKindFromRecord(record);
+      return {
+        id: record.id,
+        name: record.originalName,
+        kind,
+        durationLabel: formatDuration(record.metadata.durationSeconds),
+        sizeLabel: formatBytes(record.sizeBytes),
+        thumbnailUrl: buildThumbnailUrl(record, kind),
+        record,
+      };
+    });
+  }, [assetRecords]);
+
+  const categories = useMemo<AssetCategory[]>(() => {
+    return categoryDefinitions.map((category) => ({
+      ...category,
+      assets: resources.filter((asset) => asset.kind === category.type),
+    }));
+  }, [resources]);
+
+  const filteredCategories = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      return categories;
+    }
+
+    return categories.map((category) => ({
+      ...category,
+      assets: category.assets.filter((asset) => asset.name.toLowerCase().includes(query)),
+    }));
+  }, [categories, searchQuery]);
 
   return (
     <div className="flex flex-col h-full">
@@ -180,8 +363,10 @@ export const ResourcesPanel = ({ onAssetSelect, onAssetDragStart }: ResourcesPan
       <div className="flex items-center justify-between px-3 py-2 bg-studio-panel-header border-b border-studio-border">
         <h3 className="text-studio-text font-medium text-sm">Resources</h3>
         <button
-          className="p-1 text-studio-text-muted hover:text-studio-text hover:bg-studio-border rounded transition-colors"
+          className="p-1 text-studio-text-muted hover:text-studio-text hover:bg-studio-border rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Import Media"
+          onClick={handleImportClick}
+          disabled={isImporting}
         >
           <PlusIcon />
         </button>
@@ -200,6 +385,14 @@ export const ResourcesPanel = ({ onAssetSelect, onAssetDragStart }: ResourcesPan
 
       {/* Asset Categories */}
       <div className="flex-1 overflow-y-auto studio-scrollbar">
+        {isLoading && (
+          <div className="px-3 py-4 text-xs text-studio-text-muted">Loading assets...</div>
+        )}
+        {!isLoading && filteredCategories.every((category) => category.assets.length === 0) && (
+          <div className="px-3 py-4 text-xs text-studio-text-muted">
+            {searchQuery ? "No matching assets." : "No assets imported yet."}
+          </div>
+        )}
         {filteredCategories.map((category) => (
           <div key={category.id} className="border-b border-studio-border">
             {/* Category Header */}
@@ -236,12 +429,23 @@ export const ResourcesPanel = ({ onAssetSelect, onAssetDragStart }: ResourcesPan
                     draggable
                     onDragStart={(e) => handleDragStart(e, asset)}
                   >
-                    <span className="shrink-0">{getAssetIcon(asset.type)}</span>
+                    <span className="shrink-0">
+                      {asset.thumbnailUrl ? (
+                        <img
+                          src={asset.thumbnailUrl}
+                          alt={asset.name}
+                          className="w-10 h-6 rounded object-cover border border-studio-border"
+                          loading="lazy"
+                        />
+                      ) : (
+                        getAssetIcon(asset.kind)
+                      )}
+                    </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs truncate">{asset.name}</p>
                       <div className="flex items-center gap-2 text-[10px] text-studio-text-muted">
-                        {asset.duration && <span>{asset.duration}</span>}
-                        {asset.size && <span>{asset.size}</span>}
+                        {asset.durationLabel && <span>{asset.durationLabel}</span>}
+                        {asset.sizeLabel && <span>{asset.sizeLabel}</span>}
                       </div>
                     </div>
                   </div>
@@ -255,16 +459,34 @@ export const ResourcesPanel = ({ onAssetSelect, onAssetDragStart }: ResourcesPan
       {/* Quick Actions */}
       <div className="px-3 py-2 border-t border-studio-border bg-studio-panel-header">
         <div className="grid grid-cols-2 gap-2">
-          <button className="flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-studio-text-muted hover:text-studio-text bg-studio-bg hover:bg-studio-border rounded transition-colors">
+          <button
+            className="flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-studio-text-muted hover:text-studio-text bg-studio-bg hover:bg-studio-border rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleImportClick}
+            disabled={isImporting}
+          >
             <VideoIcon />
-            <span>Import</span>
+            <span>{isImporting ? "Importing..." : "Import"}</span>
           </button>
-          <button className="flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-studio-text-muted hover:text-studio-text bg-studio-bg hover:bg-studio-border rounded transition-colors">
+          <button
+            className="flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-studio-text-muted hover:text-studio-text bg-studio-bg hover:bg-studio-border rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleImportClick}
+            disabled={isImporting}
+          >
             <FolderIcon />
             <span>Browse</span>
           </button>
         </div>
+        {errorMessage && (
+          <p className="mt-2 text-[10px] text-studio-warning">{errorMessage}</p>
+        )}
       </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        multiple
+        onChange={handleFileChange}
+      />
     </div>
   );
 };

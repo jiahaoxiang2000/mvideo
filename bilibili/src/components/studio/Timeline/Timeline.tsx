@@ -20,6 +20,7 @@ interface TimelineProps {
   onSeek: (frame: number) => void;
   onUpdateClip: (clipId: string, partial: any) => void;
   onSelectClip: (clipId: string, trackId: string) => void;
+  onAssetDrop?: (event: React.DragEvent) => void;
   onZoomChange?: (zoom: number) => void;
 }
 
@@ -34,6 +35,7 @@ export const Timeline: React.FC<TimelineProps> = ({
   onSeek,
   onUpdateClip,
   onSelectClip,
+  onAssetDrop,
   onZoomChange,
 }) => {
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -80,6 +82,19 @@ export const Timeline: React.FC<TimelineProps> = ({
       durationInFrames: newDuration,
     });
   };
+
+  const handleDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  }, []);
+
+  const handleDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      onAssetDrop?.(event);
+    },
+    [onAssetDrop]
+  );
 
   // Auto-scroll to keep playhead visible
   useEffect(() => {
@@ -139,6 +154,8 @@ export const Timeline: React.FC<TimelineProps> = ({
       <div
         ref={timelineRef}
         className="flex-1 overflow-auto studio-scrollbar relative"
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
       >
         <div
           className="relative"
