@@ -304,6 +304,7 @@ const Home: NextPage = () => {
             snapEnabled={snapEnabled}
             onSeek={seekToFrame}
             onClipSelect={handleClipSelect}
+            onZoomChange={setZoom}
           />
         }
       />
