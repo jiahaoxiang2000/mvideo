@@ -74,12 +74,14 @@ export const PreviewPlayer = ({
 
   const handleScrub = useCallback(
     (clientX: number) => {
-      if (!scrubberRef.current) return;
+      if (!scrubberRef.current || !playerRef.current) return;
       const rect = scrubberRef.current.getBoundingClientRect();
       const percent = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
       const frame = Math.round(percent * (durationInFrames - 1));
+      
+      // Seek first, then update state to avoid conflicts
+      playerRef.current.seekTo(frame);
       onFrameChange(frame);
-      playerRef.current?.seekTo(frame);
     },
     [durationInFrames, onFrameChange, playerRef]
   );
@@ -186,6 +188,9 @@ export const PreviewPlayer = ({
                 height: "100%",
               }}
               controls={false}
+              clickToPlay={false}
+              doubleClickToFullscreen={false}
+              spaceKeyToPlayOrPause={false}
             />
           </div>
         </div>
@@ -278,9 +283,10 @@ export const PreviewPlayer = ({
           <button
             className="px-2 py-1 text-xs text-studio-text-muted hover:text-studio-text hover:bg-studio-border rounded transition-colors"
             onClick={() => {
+              if (!playerRef.current) return;
               const newFrame = Math.max(0, currentFrame - 10);
+              playerRef.current.seekTo(newFrame);
               onFrameChange(newFrame);
-              playerRef.current?.seekTo(newFrame);
             }}
           >
             -10f
@@ -288,9 +294,10 @@ export const PreviewPlayer = ({
           <button
             className="px-2 py-1 text-xs text-studio-text-muted hover:text-studio-text hover:bg-studio-border rounded transition-colors"
             onClick={() => {
+              if (!playerRef.current) return;
               const newFrame = Math.max(0, currentFrame - 1);
+              playerRef.current.seekTo(newFrame);
               onFrameChange(newFrame);
-              playerRef.current?.seekTo(newFrame);
             }}
           >
             -1f
@@ -298,9 +305,10 @@ export const PreviewPlayer = ({
           <button
             className="px-2 py-1 text-xs text-studio-text-muted hover:text-studio-text hover:bg-studio-border rounded transition-colors"
             onClick={() => {
+              if (!playerRef.current) return;
               const newFrame = Math.min(durationInFrames - 1, currentFrame + 1);
+              playerRef.current.seekTo(newFrame);
               onFrameChange(newFrame);
-              playerRef.current?.seekTo(newFrame);
             }}
           >
             +1f
@@ -308,9 +316,10 @@ export const PreviewPlayer = ({
           <button
             className="px-2 py-1 text-xs text-studio-text-muted hover:text-studio-text hover:bg-studio-border rounded transition-colors"
             onClick={() => {
+              if (!playerRef.current) return;
               const newFrame = Math.min(durationInFrames - 1, currentFrame + 10);
+              playerRef.current.seekTo(newFrame);
               onFrameChange(newFrame);
-              playerRef.current?.seekTo(newFrame);
             }}
           >
             +10f

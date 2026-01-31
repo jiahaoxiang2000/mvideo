@@ -21,10 +21,17 @@ type TextOverlay = Extract<
 type ImageOverlay = Extract<OverlayItem, { type: "image" }>;
 
 const resolveVideoSrc = (src: string) => {
+  // Handle absolute URLs (http/https)
   if (src.startsWith("http://") || src.startsWith("https://")) {
     return src;
   }
 
+  // Handle API endpoints (starts with /)
+  if (src.startsWith("/")) {
+    return src;
+  }
+
+  // Handle static files in public directory
   return staticFile(src);
 };
 
@@ -128,18 +135,31 @@ export const MainComposition = (
   const clipStart = Math.max(0, trimStartInFrames);
   const clipEnd = Math.max(clipStart + 1, trimEndInFrames);
 
+  // Check if we have a valid video source
+  const hasVideo = videoSrc && videoSrc.trim() !== "";
+
   return (
     <AbsoluteFill className="bg-black">
-      <Video
-        src={resolvedVideoSrc}
-        trimBefore={clipStart}
-        trimAfter={clipEnd}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-        }}
-      />
+      {hasVideo ? (
+        <Video
+          src={resolvedVideoSrc}
+          startFrom={clipStart}
+          endAt={clipEnd}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
+      ) : (
+        <div className="flex items-center justify-center w-full h-full">
+          <div className="text-center text-gray-400">
+            <div className="text-4xl mb-4">🎬</div>
+            <div className="text-lg">No video source</div>
+            <div className="text-sm mt-2">Add a video clip to the timeline</div>
+          </div>
+        </div>
+      )}
       {overlays.map((overlay) => (
         <Sequence
           key={overlay.id}

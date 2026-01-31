@@ -120,13 +120,33 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     return payload.data;
   },
   addAsset: (asset) =>
-    set((state) => ({
-      isDirty: true,
-      project: touchProject({
+    set((state) => {
+      const updatedProject = {
         ...state.project,
         assets: [...state.project.assets, asset],
-      }),
-    })),
+      };
+
+      // Auto-update project settings from first video asset
+      if (asset.kind === "video" && state.project.assets.filter(a => a.kind === "video").length === 0) {
+        const videoWidth = asset.meta?.width;
+        const videoHeight = asset.meta?.height;
+        const videoFps = asset.meta?.fps;
+
+        if (typeof videoWidth === "number" && typeof videoHeight === "number") {
+          updatedProject.width = videoWidth;
+          updatedProject.height = videoHeight;
+        }
+
+        if (typeof videoFps === "number" && videoFps > 0) {
+          updatedProject.fps = videoFps;
+        }
+      }
+
+      return {
+        isDirty: true,
+        project: touchProject(updatedProject),
+      };
+    }),
   removeAsset: (assetId) =>
     set((state) => ({
       isDirty: true,
