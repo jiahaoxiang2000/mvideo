@@ -17,6 +17,7 @@ import {
   ExportPanel,
   TimelinePanel,
   KeymapModal,
+  ExtensionsPanel,
 } from "../components/studio";
 import { useStudioKeyboardShortcuts } from "../hooks/useStudioKeyboardShortcuts";
 import { useUIStore } from "../services/ui-store";
@@ -298,6 +299,7 @@ const Home: NextPage = () => {
           />
         }
         exportPanel={<ExportPanel />}
+        extensionsPanel={<ExtensionsPanel />}
         timelinePanel={
           <TimelinePanel
             tracks={timelineTracks}

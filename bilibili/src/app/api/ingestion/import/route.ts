@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ingestUploadedFile } from "../../../../server/ingestion";
+import { runOnAssetImported } from "../../../../services/plugins";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,7 @@ export const POST = async (req: Request) => {
     }
 
     const asset = await ingestUploadedFile(file);
+    await runOnAssetImported(asset);
     return NextResponse.json({ type: "success", data: asset });
   } catch (error) {
     return NextResponse.json(

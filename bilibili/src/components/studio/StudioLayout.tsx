@@ -14,6 +14,7 @@ interface StudioLayoutProps {
   inspectorPanel: ReactNode;
   exportPanel: ReactNode;
   timelinePanel: ReactNode;
+  extensionsPanel?: ReactNode;
 }
 
 export const StudioLayout = ({
@@ -23,8 +24,11 @@ export const StudioLayout = ({
   inspectorPanel,
   exportPanel,
   timelinePanel,
+  extensionsPanel,
 }: StudioLayoutProps) => {
-  const [rightPanelTab, setRightPanelTab] = useState<"inspector" | "export">("inspector");
+  const [rightPanelTab, setRightPanelTab] = useState<
+    "inspector" | "export" | "extensions"
+  >("inspector");
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-studio-bg">
@@ -89,10 +93,24 @@ export const StudioLayout = ({
                     >
                       Export
                     </button>
+                    {extensionsPanel && (
+                      <button
+                        onClick={() => setRightPanelTab("extensions")}
+                        className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                          rightPanelTab === "extensions"
+                            ? "text-studio-accent border-b-2 border-studio-accent"
+                            : "text-studio-text-muted hover:text-studio-text"
+                        }`}
+                      >
+                        Extensions
+                      </button>
+                    )}
                   </div>
                   {/* Tab Content */}
                   <div className="flex-1 min-h-0">
-                    {rightPanelTab === "inspector" ? inspectorPanel : exportPanel}
+                    {rightPanelTab === "inspector" && inspectorPanel}
+                    {rightPanelTab === "export" && exportPanel}
+                    {rightPanelTab === "extensions" && extensionsPanel}
                   </div>
                 </div>
               </ResizablePanel>

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { Asset, Clip, Project, Track } from "../../types/models";
 import { createEmptyProject } from "./project-serialization";
+import { runOnProjectLoaded } from "./plugins";
 
 type ProjectState = {
   project: Project;
@@ -22,7 +23,10 @@ const touchProject = (project: Project): Project => {
 
 export const useProjectStore = create<ProjectState>((set) => ({
   project: createEmptyProject(),
-  setProject: (project) => set({ project }),
+  setProject: (project) => {
+    set({ project });
+    void runOnProjectLoaded(project);
+  },
   updateProject: (partial) =>
     set((state) => ({
       project: touchProject({

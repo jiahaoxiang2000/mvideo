@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import type { RenderRequest } from "../../../../types/plugin";
+import { runOnRenderRequested } from "../../../../services/plugins";
 
 export const runtime = "nodejs";
 
@@ -17,10 +19,12 @@ export const POST = async (req: NextRequest) => {
   try {
     const body = await req.json();
     // Validate the request body
-    RenderRequestSchema.parse(body);
+    const renderRequest = RenderRequestSchema.parse(body) as RenderRequest;
 
     // Generate a unique render job ID
     const jobId = `render-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+
+    await runOnRenderRequested(null, { request: renderRequest, jobId });
 
     // TODO: Implement actual render logic
     // This would typically:
