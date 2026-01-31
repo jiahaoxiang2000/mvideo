@@ -3,8 +3,11 @@ import { DockId, PanelState } from "../../types/layout";
 
 type UIState = {
   panels: PanelState[];
+  showKeymaps: boolean;
   togglePanelCollapse: (panelId: string) => void;
   setPanelDock: (panelId: string, dock: DockId) => void;
+  toggleKeymaps: () => void;
+  setShowKeymaps: (show: boolean) => void;
 };
 
 const defaultPanels: PanelState[] = [
@@ -18,6 +21,7 @@ const defaultPanels: PanelState[] = [
 
 export const useUIStore = create<UIState>((set) => ({
   panels: defaultPanels,
+  showKeymaps: false,
   togglePanelCollapse: (panelId) =>
     set((state) => ({
       panels: state.panels.map((panel) =>
@@ -30,4 +34,6 @@ export const useUIStore = create<UIState>((set) => ({
         panel.id === panelId ? { ...panel, dock } : panel
       ),
     })),
+  toggleKeymaps: () => set((state) => ({ showKeymaps: !state.showKeymaps })),
+  setShowKeymaps: (show) => set({ showKeymaps: show }),
 }));

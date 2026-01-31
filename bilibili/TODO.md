@@ -89,17 +89,17 @@ Based on [ARCH.md](./ARCH.md)
 
 **4.1 Core Layout:**
 
-- [ ] Create main studio layout (panels, resizable areas)
-- [ ] Implement panel system (dockable, collapsible)
-- [ ] Add keyboard shortcut system
-- [ ] Create toolbar component
+- [x] Create main studio layout (panels, resizable areas)
+- [x] Implement panel system (dockable, collapsible)
+- [x] Add keyboard shortcut system
+- [x] Create toolbar component
 
 **4.2 Preview Player:**
 
-- [ ] Integrate Remotion Player component
-- [ ] Implement play/pause/seek controls
-- [ ] Add frame-accurate scrubbing
-- [ ] Sync player with timeline state
+- [x] Integrate Remotion Player component
+- [x] Implement play/pause/seek controls
+- [x] Add frame-accurate scrubbing
+- [x] Sync player with timeline state
 
 ### 4.3 Timeline Component (Requires 4.1 + 4.2)
 

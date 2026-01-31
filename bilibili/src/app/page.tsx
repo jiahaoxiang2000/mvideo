@@ -19,8 +19,10 @@ import {
   ResourcesPanel,
   InspectorPanel,
   TimelinePanel,
+  KeymapModal,
 } from "../components/studio";
 import { useStudioKeyboardShortcuts } from "../hooks/useStudioKeyboardShortcuts";
+import { useUIStore } from "../services/ui-store";
 import { compositionPreviewConfig } from "../remotion/preview-config";
 
 const clampFrame = (frame: number, totalFrames: number) =>
@@ -115,7 +117,10 @@ const Home: NextPage = () => {
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [rippleEnabled, setRippleEnabled] = useState(false);
   const [zoom, setZoom] = useState(100);
-  const [activeTool, setActiveTool] = useState<"select" | "razor" | "hand">("select");
+  const [activeTool, setActiveTool] = useState<"select" | "razor" | "hand">(
+    "select",
+  );
+  const { toggleKeymaps } = useUIStore();
   const [selectedClip, setSelectedClip] = useState<{
     id: string;
     name: string;
@@ -126,7 +131,10 @@ const Home: NextPage = () => {
 
   const playerRef = useRef<PlayerRef>(null);
 
-  const timelineTracks = useMemo(() => createDemoTracks(totalFrames), [totalFrames]);
+  const timelineTracks = useMemo(
+    () => createDemoTracks(totalFrames),
+    [totalFrames],
+  );
 
   const inputProps: z.infer<typeof MyCompProps> = useMemo(() => {
     return {
@@ -140,7 +148,7 @@ const Home: NextPage = () => {
       setCurrentFrame(nextFrame);
       playerRef.current?.seekTo(nextFrame);
     },
-    [totalFrames]
+    [totalFrames],
   );
 
   const handleTogglePlay = useCallback(() => {
@@ -155,7 +163,7 @@ const Home: NextPage = () => {
     (delta: number) => {
       seekToFrame(currentFrame + delta);
     },
-    [currentFrame, seekToFrame]
+    [currentFrame, seekToFrame],
   );
 
   const handleSkipToStart = useCallback(() => {
@@ -182,20 +190,28 @@ const Home: NextPage = () => {
     console.log("Redo");
   }, []);
 
-  const handleClipSelect = useCallback((clipId: string, trackId: string) => {
-    // Find the clip in tracks
-    const track = timelineTracks.find((t) => t.id === trackId);
-    const clip = track?.clips.find((c) => c.id === clipId);
-    if (clip && track) {
-      setSelectedClip({
-        id: clip.id,
-        name: clip.label,
-        type: track.type === "subtitle" ? "text" : track.type === "overlay" ? "image" : track.type,
-        startFrame: clip.start,
-        durationInFrames: clip.duration,
-      });
-    }
-  }, [timelineTracks]);
+  const handleClipSelect = useCallback(
+    (clipId: string, trackId: string) => {
+      // Find the clip in tracks
+      const track = timelineTracks.find((t) => t.id === trackId);
+      const clip = track?.clips.find((c) => c.id === clipId);
+      if (clip && track) {
+        setSelectedClip({
+          id: clip.id,
+          name: clip.label,
+          type:
+            track.type === "subtitle"
+              ? "text"
+              : track.type === "overlay"
+                ? "image"
+                : track.type,
+          startFrame: clip.start,
+          durationInFrames: clip.duration,
+        });
+      }
+    },
+    [timelineTracks],
+  );
 
   // Keyboard shortcuts
   useStudioKeyboardShortcuts({
@@ -216,79 +232,83 @@ const Home: NextPage = () => {
     onZoomOut: handleZoomOut,
     onUndo: handleUndo,
     onRedo: handleRedo,
+    onToggleKeymaps: toggleKeymaps,
   });
 
   return (
-    <StudioLayout
-      toolbar={
-        <StudioToolbar
-          isPlaying={isPlaying}
-          snapEnabled={snapEnabled}
-          rippleEnabled={rippleEnabled}
-          zoom={zoom}
-          currentFrame={currentFrame}
-          totalFrames={totalFrames}
-          fps={compositionPreviewConfig.fps}
-          activeTool={activeTool}
-          onTogglePlay={handleTogglePlay}
-          onStepBackward={() => handleStep(-1)}
-          onStepForward={() => handleStep(1)}
-          onSkipToStart={handleSkipToStart}
-          onSkipToEnd={handleSkipToEnd}
-          onToggleSnap={() => setSnapEnabled((prev) => !prev)}
-          onToggleRipple={() => setRippleEnabled((prev) => !prev)}
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          onToolChange={setActiveTool}
-        />
-      }
-      resourcesPanel={
-        <ResourcesPanel
-          onAssetSelect={(asset) => console.log("Asset selected:", asset)}
-          onAssetDragStart={(asset) => console.log("Dragging asset:", asset)}
-        />
-      }
-      previewPanel={
-        <PreviewPlayer
-          component={compositionPreviewConfig.component}
-          inputProps={inputProps}
-          durationInFrames={compositionPreviewConfig.durationInFrames}
-          fps={compositionPreviewConfig.fps}
-          width={compositionPreviewConfig.width}
-          height={compositionPreviewConfig.height}
-          currentFrame={currentFrame}
-          isPlaying={isPlaying}
-          onFrameChange={setCurrentFrame}
-          onPlayingChange={setIsPlaying}
-          playerRef={playerRef}
-        />
-      }
-      inspectorPanel={
-        <InspectorPanel
-          selectedClip={selectedClip}
-          fps={compositionPreviewConfig.fps}
-          onClipUpdate={(updates) => {
-            if (selectedClip) {
-              setSelectedClip({ ...selectedClip, ...updates });
-            }
-          }}
-        />
-      }
-      timelinePanel={
-        <TimelinePanel
-          tracks={timelineTracks}
-          currentFrame={currentFrame}
-          totalFrames={totalFrames}
-          fps={compositionPreviewConfig.fps}
-          zoom={zoom}
-          snapEnabled={snapEnabled}
-          onSeek={seekToFrame}
-          onClipSelect={handleClipSelect}
-        />
-      }
-    />
+    <>
+      <StudioLayout
+        toolbar={
+          <StudioToolbar
+            isPlaying={isPlaying}
+            snapEnabled={snapEnabled}
+            rippleEnabled={rippleEnabled}
+            zoom={zoom}
+            currentFrame={currentFrame}
+            totalFrames={totalFrames}
+            fps={compositionPreviewConfig.fps}
+            activeTool={activeTool}
+            onTogglePlay={handleTogglePlay}
+            onStepBackward={() => handleStep(-1)}
+            onStepForward={() => handleStep(1)}
+            onSkipToStart={handleSkipToStart}
+            onSkipToEnd={handleSkipToEnd}
+            onToggleSnap={() => setSnapEnabled((prev) => !prev)}
+            onToggleRipple={() => setRippleEnabled((prev) => !prev)}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            onToolChange={setActiveTool}
+          />
+        }
+        resourcesPanel={
+          <ResourcesPanel
+            onAssetSelect={(asset) => console.log("Asset selected:", asset)}
+            onAssetDragStart={(asset) => console.log("Dragging asset:", asset)}
+          />
+        }
+        previewPanel={
+          <PreviewPlayer
+            component={compositionPreviewConfig.component}
+            inputProps={inputProps}
+            durationInFrames={compositionPreviewConfig.durationInFrames}
+            fps={compositionPreviewConfig.fps}
+            width={compositionPreviewConfig.width}
+            height={compositionPreviewConfig.height}
+            currentFrame={currentFrame}
+            isPlaying={isPlaying}
+            onFrameChange={setCurrentFrame}
+            onPlayingChange={setIsPlaying}
+            playerRef={playerRef}
+          />
+        }
+        inspectorPanel={
+          <InspectorPanel
+            selectedClip={selectedClip}
+            fps={compositionPreviewConfig.fps}
+            onClipUpdate={(updates) => {
+              if (selectedClip) {
+                setSelectedClip({ ...selectedClip, ...updates });
+              }
+            }}
+          />
+        }
+        timelinePanel={
+          <TimelinePanel
+            tracks={timelineTracks}
+            currentFrame={currentFrame}
+            totalFrames={totalFrames}
+            fps={compositionPreviewConfig.fps}
+            zoom={zoom}
+            snapEnabled={snapEnabled}
+            onSeek={seekToFrame}
+            onClipSelect={handleClipSelect}
+          />
+        }
+      />
+      <KeymapModal />
+    </>
   );
 };
 

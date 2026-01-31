@@ -39,6 +39,9 @@ export interface StudioShortcutHandlers {
 
   // Save
   onSave: () => void;
+
+  // Help
+  onToggleKeymaps: () => void;
 }
 
 const defaultHandlers: StudioShortcutHandlers = {
@@ -69,6 +72,7 @@ const defaultHandlers: StudioShortcutHandlers = {
   onMarkOut: () => {},
   onClearMarks: () => {},
   onSave: () => {},
+  onToggleKeymaps: () => {},
 };
 
 export const useStudioKeyboardShortcuts = (
@@ -267,6 +271,13 @@ export const useStudioKeyboardShortcuts = (
         mergedHandlers.onSave();
         return;
       }
+
+      // Help
+      if (key === "?" && !modKey) {
+        event.preventDefault();
+        mergedHandlers.onToggleKeymaps();
+        return;
+      }
     },
     [mergedHandlers]
   );
@@ -308,5 +319,8 @@ export const KEYBOARD_SHORTCUTS = {
     { key: "I", description: "Mark in point" },
     { key: "O", description: "Mark out point" },
     { key: "X", description: "Clear marks" },
+  ],
+  help: [
+    { key: "?", description: "Toggle keyboard shortcuts" },
   ],
 };
