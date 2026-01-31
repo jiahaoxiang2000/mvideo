@@ -112,7 +112,7 @@ export const Timeline: React.FC<TimelineProps> = ({
 
   const handleWheel = useCallback(
     (event: React.WheelEvent<HTMLDivElement>) => {
-      if (!onZoomChange || !event.ctrlKey) {
+      if (!onZoomChange) {
         return;
       }
 
