@@ -16,7 +16,6 @@ interface NewProjectModalProps {
     width: number;
     height: number;
     fps: number;
-    durationInFrames: number;
   }) => void;
 }
 
@@ -35,26 +34,22 @@ export const NewProjectModal = ({ isOpen, onClose, onCreateProject }: NewProject
   const [width, setWidth] = useState(1280);
   const [height, setHeight] = useState(720);
   const [fps, setFps] = useState(30);
-  const [durationSeconds, setDurationSeconds] = useState(60);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const durationInFrames = Math.round(durationSeconds * fps);
     onCreateProject({
       name: projectName || "Untitled Project",
       width,
       height,
       fps,
-      durationInFrames,
     });
     // Reset form
     setProjectName("");
     setWidth(1280);
     setHeight(720);
     setFps(30);
-    setDurationSeconds(60);
   };
 
   const applyPreset = (preset: typeof presets[0]) => {
@@ -162,19 +157,6 @@ export const NewProjectModal = ({ isOpen, onClose, onCreateProject }: NewProject
                 <option value="120">120 fps (Slow Motion)</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-studio-text mb-2">
-                Duration (seconds)
-              </label>
-              <input
-                type="number"
-                value={durationSeconds}
-                onChange={(e) => setDurationSeconds(parseInt(e.target.value) || 60)}
-                min="1"
-                max="3600"
-                className="w-full px-3 py-2 bg-studio-bg border border-studio-border rounded text-studio-text focus:outline-none focus:ring-2 focus:ring-studio-accent"
-              />
-            </div>
           </div>
 
           {/* Summary */}
@@ -182,7 +164,6 @@ export const NewProjectModal = ({ isOpen, onClose, onCreateProject }: NewProject
             <div className="text-sm text-studio-text-muted space-y-1">
               <div>Resolution: <span className="text-studio-text">{width} × {height}</span></div>
               <div>Frame Rate: <span className="text-studio-text">{fps} fps</span></div>
-              <div>Duration: <span className="text-studio-text">{durationSeconds}s ({Math.round(durationSeconds * fps)} frames)</span></div>
               <div>Aspect Ratio: <span className="text-studio-text">{(width / height).toFixed(2)}:1</span></div>
             </div>
           </div>

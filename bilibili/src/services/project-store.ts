@@ -13,7 +13,6 @@ type ProjectState = {
     width: number;
     height: number;
     fps: number;
-    durationInFrames: number;
   }) => Promise<Project>;
   modifyProject: (projectId: string, partial: Partial<Project>) => Promise<Project>;
   addAsset: (asset: Asset) => void;
@@ -63,7 +62,6 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       width: config.width,
       height: config.height,
       fps: config.fps,
-      durationInFrames: config.durationInFrames,
       assets: [],
       tracks: [],
       createdAt: now,

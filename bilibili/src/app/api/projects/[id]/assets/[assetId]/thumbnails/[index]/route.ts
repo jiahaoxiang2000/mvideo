@@ -1,8 +1,8 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
-import { readAssetRecord } from "../../../../../../../server/asset-store";
-import { logger } from "../../../../../../../helpers/logger";
+import { readAssetRecord } from "../../../../../../../../server/asset-store";
+import { logger } from "../../../../../../../../helpers/logger";
 
 export const runtime = "nodejs";
 
@@ -23,7 +23,9 @@ const getContentType = (filePath: string) => {
 
 export const GET = async (
   _req: Request,
-  { params }: { params: Promise<{ id: string; assetId: string; index: string }> },
+  {
+    params,
+  }: { params: Promise<{ id: string; assetId: string; index: string }> },
 ) => {
   try {
     const { id: projectId, assetId, index } = await params;
@@ -36,7 +38,11 @@ export const GET = async (
     }
 
     const thumbnailIndex = Number.parseInt(index, 10);
-    if (!Number.isFinite(thumbnailIndex) || thumbnailIndex < 0 || thumbnailIndex >= record.derived.thumbnailPaths.length) {
+    if (
+      !Number.isFinite(thumbnailIndex) ||
+      thumbnailIndex < 0 ||
+      thumbnailIndex >= record.derived.thumbnailPaths.length
+    ) {
       return NextResponse.json(
         { type: "error", message: "Thumbnail index out of range" },
         { status: 400 },
@@ -51,10 +57,10 @@ export const GET = async (
       },
     });
   } catch (error) {
-    logger.reportError(error as Error, { 
+    logger.reportError(error as Error, {
       action: "asset-thumbnail",
       projectId: (await params).id,
-      assetId: (await params).assetId
+      assetId: (await params).assetId,
     });
     return NextResponse.json(
       { type: "error", message: (error as Error).message },

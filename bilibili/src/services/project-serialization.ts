@@ -19,7 +19,6 @@ export const createEmptyProject = (overrides: Partial<Project> = {}) => {
     width: 1280,
     height: 720,
     fps: 30,
-    durationInFrames: 300,
     assets: [],
     tracks: [],
     createdAt: now,
