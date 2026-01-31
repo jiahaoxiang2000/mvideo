@@ -30,7 +30,7 @@ const clampFrame = (frame: number, totalFrames: number) =>
 
 const Home: NextPage = () => {
   const [text] = useState<string>(defaultMyCompProps.title);
-  const { project, isDirty, updateClip, updateProject, createProject, loadProject, saveProject, listProjects } = useProjectStore();
+  const { project, isDirty, updateClip, updateProject, createProject, loadProject, saveProject, listProjects, removeClip } = useProjectStore();
   const totalFrames = project.durationInFrames ?? compositionPreviewConfig.durationInFrames;
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -177,6 +177,15 @@ const Home: NextPage = () => {
     console.log("Redo");
   }, []);
 
+  const handleDelete = useCallback(() => {
+    if (selectedClipId) {
+      console.log("Deleting clip:", selectedClipId);
+      removeClip(selectedClipId);
+      setSelectedClipId(null);
+      setSelectedTrackId(null);
+    }
+  }, [selectedClipId, removeClip]);
+
   const selectedClip = useMemo(() => {
     if (!selectedClipId || !selectedTrackId) {
       return null;
@@ -277,6 +286,7 @@ const Home: NextPage = () => {
     onZoomOut: handleZoomOut,
     onUndo: handleUndo,
     onRedo: handleRedo,
+    onDelete: handleDelete,
     onToggleKeymaps: toggleKeymaps,
   });
 
