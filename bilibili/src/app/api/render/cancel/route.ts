@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "../../../../helpers/logger";
 
 export const runtime = "nodejs";
 
@@ -34,6 +35,7 @@ export const POST = async (req: NextRequest) => {
       },
     });
   } catch (error) {
+    logger.reportError(error as Error, { action: "render-cancel" });
     return NextResponse.json(
       {
         type: "error",

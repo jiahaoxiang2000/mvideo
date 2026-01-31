@@ -8,6 +8,7 @@ import type {
   DerivedAssetRecord,
   MediaMetadata,
 } from "../../../../server/asset-store";
+import { logger } from "../../../../helpers/logger";
 
 export const runtime = "nodejs";
 
@@ -30,6 +31,7 @@ export const GET = async (_req: Request, { params }: RouteParams) => {
 
     return NextResponse.json({ type: "success", data: asset });
   } catch (error) {
+    logger.reportError(error as Error, { action: "get-asset", id: (await params).id });
     return NextResponse.json(
       { type: "error", message: (error as Error).message },
       { status: 500 },
@@ -54,6 +56,7 @@ export const PATCH = async (req: Request, { params }: RouteParams) => {
 
     return NextResponse.json({ type: "success", data: asset });
   } catch (error) {
+    logger.reportError(error as Error, { action: "update-asset", id: (await params).id });
     const message = (error as Error).message;
     const status = message.startsWith("Asset not found") ? 404 : 500;
     return NextResponse.json({ type: "error", message }, { status });
@@ -66,6 +69,7 @@ export const DELETE = async (_req: Request, { params }: RouteParams) => {
     await deleteAsset(id);
     return NextResponse.json({ type: "success" });
   } catch (error) {
+    logger.reportError(error as Error, { action: "delete-asset", id: (await params).id });
     return NextResponse.json(
       { type: "error", message: (error as Error).message },
       { status: 500 },

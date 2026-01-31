@@ -5,6 +5,7 @@ import ffmpeg, {
 } from "fluent-ffmpeg";
 import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
 import ffprobeInstaller from "@ffprobe-installer/ffprobe";
+import { logger } from "../helpers/logger";
 
 const ffmpegPath = ffmpegInstaller?.path;
 const ffprobePath = ffprobeInstaller?.path;
@@ -219,12 +220,18 @@ export const runFfmpegCommand = (
     command
       .on("start", (commandLine) => {
         lastCommand = commandLine;
+        logger.debug("FFmpeg command started", { command: commandLine });
         handlers.onStart?.(commandLine);
       })
       .on("progress", (progress) => {
         handlers.onProgress?.(progress);
       })
       .on("error", (error, stdout, stderr) => {
+        logger.error("FFmpeg command failed", {
+          command: lastCommand,
+          error: error.message,
+          stderr,
+        });
         reject(
           new FfmpegCommandError("FFmpeg command failed", {
             command: lastCommand,
@@ -234,7 +241,10 @@ export const runFfmpegCommand = (
           }),
         );
       })
-      .on("end", () => resolve())
+      .on("end", () => {
+        logger.debug("FFmpeg command completed");
+        resolve();
+      })
       .run();
   });
 };

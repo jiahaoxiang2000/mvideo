@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { randomUUID, createHash } from "crypto";
+import { logger } from "../helpers/logger";
 import {
   buildNormalizeAudioCommand,
   buildProxyCommand,
@@ -259,57 +260,72 @@ const processDerivedAssets = async (
   await ensureDir(getCacheRoot());
 
   if (await cacheIsComplete(cachePaths)) {
+    logger.info("Using cached derived assets", { assetId: record.id, cacheKey });
     await copyDerivedAssets(cachePaths, derivedPaths);
   } else {
-    const trimCommand = buildTrimCommand({
-      inputPath: record.sourcePath,
-      outputPath: derivedPaths.trimmedPath,
-      startTime: 0,
-      videoCodec: "libx264",
-      audioCodec: "aac",
-      format: "mp4",
-    });
-    await runFfmpegCommand(trimCommand);
+    logger.info("Processing derived assets", { assetId: record.id, cacheKey });
+    
+    await logger.trackDuration("ffmpeg-trim", async () => {
+      const trimCommand = buildTrimCommand({
+        inputPath: record.sourcePath,
+        outputPath: derivedPaths.trimmedPath,
+        startTime: 0,
+        videoCodec: "libx264",
+        audioCodec: "aac",
+        format: "mp4",
+      });
+      await runFfmpegCommand(trimCommand);
+    }, { assetId: record.id });
 
-    const normalizeCommand = buildNormalizeAudioCommand({
-      inputPath: derivedPaths.trimmedPath,
-      outputPath: derivedPaths.normalizedAudioPath,
-      format: "wav",
-      targetLufs: processingProfile.targetLufs,
-      truePeak: processingProfile.truePeak,
-      loudnessRange: processingProfile.loudnessRange,
-    });
-    await runFfmpegCommand(normalizeCommand);
+    await logger.trackDuration("ffmpeg-normalize", async () => {
+      const normalizeCommand = buildNormalizeAudioCommand({
+        inputPath: derivedPaths.trimmedPath,
+        outputPath: derivedPaths.normalizedAudioPath,
+        format: "wav",
+        targetLufs: processingProfile.targetLufs,
+        truePeak: processingProfile.truePeak,
+        loudnessRange: processingProfile.loudnessRange,
+      });
+      await runFfmpegCommand(normalizeCommand);
+    }, { assetId: record.id });
 
-    const proxyCommand = buildProxyCommand({
-      inputPath: derivedPaths.trimmedPath,
-      outputPath: derivedPaths.proxyPath,
-      width: proxyWidth,
-      fps: record.metadata.fps ?? undefined,
-      videoBitrate: "1800k",
-      audioBitrate: "128k",
-      format: "mp4",
-    });
-    proxyCommand.videoCodec("libx264").audioCodec("aac");
-    await runFfmpegCommand(proxyCommand);
+    await logger.trackDuration("ffmpeg-proxy", async () => {
+      const proxyCommand = buildProxyCommand({
+        inputPath: derivedPaths.trimmedPath,
+        outputPath: derivedPaths.proxyPath,
+        width: proxyWidth,
+        fps: record.metadata.fps ?? undefined,
+        videoBitrate: "1800k",
+        audioBitrate: "128k",
+        format: "mp4",
+      });
+      proxyCommand.videoCodec("libx264").audioCodec("aac");
+      await runFfmpegCommand(proxyCommand);
+    }, { assetId: record.id });
 
-    await ensureDir(derivedPaths.thumbnailsDir);
-    await generateThumbnails({
-      inputPath: derivedPaths.trimmedPath,
-      outputDir: derivedPaths.thumbnailsDir,
-      count: thumbnailCount,
-      width: 320,
-    });
+    await logger.trackDuration("generate-thumbnails", async () => {
+      await ensureDir(derivedPaths.thumbnailsDir);
+      await generateThumbnails({
+        inputPath: derivedPaths.trimmedPath,
+        outputDir: derivedPaths.thumbnailsDir,
+        count: thumbnailCount,
+        width: 320,
+      });
+    }, { assetId: record.id });
 
-    await createWaveformData({
-      inputPath: derivedPaths.normalizedAudioPath,
-      outputPath: derivedPaths.waveformPath,
-      points: waveformPoints,
-      sampleRate: waveformSampleRate,
-    });
+    await logger.trackDuration("create-waveform", async () => {
+      await createWaveformData({
+        inputPath: derivedPaths.normalizedAudioPath,
+        outputPath: derivedPaths.waveformPath,
+        points: waveformPoints,
+        sampleRate: waveformSampleRate,
+      });
+    }, { assetId: record.id });
 
-    await ensureDir(cacheDir);
-    await copyDerivedAssets(derivedPaths, cachePaths);
+    await logger.trackDuration("cache-derived-assets", async () => {
+      await ensureDir(cacheDir);
+      await copyDerivedAssets(derivedPaths, cachePaths);
+    }, { assetId: record.id });
   }
 
   const thumbnailPaths = await listThumbnailPaths(derivedPaths.thumbnailsDir);
@@ -331,26 +347,28 @@ const processDerivedAssets = async (
 };
 
 export const ingestUploadedFile = async (file: File): Promise<AssetRecord> => {
-  const assetId = randomUUID();
-  const originalName = sanitizeFilename(file.name || "source");
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const sourcePath = await writeAssetSource(assetId, originalName, buffer);
-  const metadata = await extractMetadata(sourcePath);
-  const sourceHash = hashBuffer(buffer);
+  return await logger.trackDuration("ingest-uploaded-file", async () => {
+    const assetId = randomUUID();
+    const originalName = sanitizeFilename(file.name || "source");
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const sourcePath = await writeAssetSource(assetId, originalName, buffer);
+    const metadata = await extractMetadata(sourcePath);
+    const sourceHash = hashBuffer(buffer);
 
-  const record: AssetRecord = {
-    id: assetId,
-    originalName,
-    sourcePath,
-    sizeBytes: buffer.byteLength,
-    createdAt: new Date().toISOString(),
-    metadata,
-  };
+    const record: AssetRecord = {
+      id: assetId,
+      originalName,
+      sourcePath,
+      sizeBytes: buffer.byteLength,
+      createdAt: new Date().toISOString(),
+      metadata,
+    };
 
-  await ensureFfmpegAvailable();
-  const derived = await processDerivedAssets(record, sourceHash);
-  const updatedRecord = { ...record, derived };
+    await ensureFfmpegAvailable();
+    const derived = await processDerivedAssets(record, sourceHash);
+    const updatedRecord = { ...record, derived };
 
-  await writeAssetRecord(updatedRecord);
-  return updatedRecord;
+    await writeAssetRecord(updatedRecord);
+    return updatedRecord;
+  }, { fileName: file.name });
 };

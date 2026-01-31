@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { logger } from "../helpers/logger";
 
 export type RenderFormat = "mp4" | "webm" | "mov";
 export type RenderQuality = "low" | "medium" | "high" | "ultra";
@@ -59,6 +60,7 @@ export const useExportStore = create<ExportState>((set, get) => ({
 
   startRender: async (config) => {
     const jobId = `render-${Date.now()}`;
+    logger.info("Starting render job", { jobId, config });
     const newJob: RenderJob = {
       id: jobId,
       status: "pending",
@@ -90,6 +92,8 @@ export const useExportStore = create<ExportState>((set, get) => ({
   completeJob: (jobId, outputUrl, outputSize) =>
     set((state) => {
       if (state.currentJob?.id === jobId) {
+        const durationMs = new Date().getTime() - state.currentJob.startedAt.getTime();
+        logger.info("Render job completed", { jobId, durationMs, outputSize });
         const completedJob: RenderJob = {
           ...state.currentJob,
           status: "completed",
@@ -109,6 +113,8 @@ export const useExportStore = create<ExportState>((set, get) => ({
   failJob: (jobId, error) =>
     set((state) => {
       if (state.currentJob?.id === jobId) {
+        const durationMs = new Date().getTime() - state.currentJob.startedAt.getTime();
+        logger.error("Render job failed", { jobId, durationMs, error });
         const failedJob: RenderJob = {
           ...state.currentJob,
           status: "failed",

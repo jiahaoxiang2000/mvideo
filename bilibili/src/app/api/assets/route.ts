@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { listAssetRecords } from "../../../server/asset-store";
+import { logger } from "../../../helpers/logger";
 
 export const runtime = "nodejs";
 
@@ -8,6 +9,7 @@ export const GET = async () => {
     const assets = await listAssetRecords();
     return NextResponse.json({ type: "success", data: assets });
   } catch (error) {
+    logger.reportError(error as Error, { action: "list-assets" });
     return NextResponse.json(
       { type: "error", message: (error as Error).message },
       { status: 500 },

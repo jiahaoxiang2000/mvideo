@@ -210,10 +210,9 @@ Based on [ARCH.md](./ARCH.md)
 
 **8.1 Observability:**
 
-- [ ] Add logging for pipeline steps
-- [ ] Track render durations
-- [ ] Implement error reporting
-- [ ] Add usage analytics (optional)
+- [x] Add logging for pipeline steps
+- [x] Track render durations
+- [x] Implement error reporting
 
 **8.2 Performance:**
 
@@ -234,17 +233,17 @@ Based on [ARCH.md](./ARCH.md)
 
 ## Current Status Summary
 
-| Component | UI Built | Server Built | Integrated |
-|-----------|----------|--------------|------------|
-| Asset Ingestion | - | Yes | - |
-| Asset Store | - | Yes | - |
-| FFmpeg Processing | - | Yes | - |
-| Resources Panel | Yes (demo data) | Yes | No |
-| Timeline | Yes (demo data) | Yes (store) | No |
-| Preview Player | Yes | Yes (compositions) | Partial |
-| Inspector Panel | Yes | Yes (store) | No |
-| Export Panel | Yes (simulated) | Stub | No |
-| Render API | - | Stub | No |
+| Component         | UI Built        | Server Built       | Integrated |
+| ----------------- | --------------- | ------------------ | ---------- |
+| Asset Ingestion   | -               | Yes                | -          |
+| Asset Store       | -               | Yes                | -          |
+| FFmpeg Processing | -               | Yes                | -          |
+| Resources Panel   | Yes (demo data) | Yes                | No         |
+| Timeline          | Yes (demo data) | Yes (store)        | No         |
+| Preview Player    | Yes             | Yes (compositions) | Partial    |
+| Inspector Panel   | Yes             | Yes (store)        | No         |
+| Export Panel      | Yes (simulated) | Stub               | No         |
+| Render API        | -               | Stub               | No         |
 
 ## Dependency Graph (Updated)
 
@@ -279,26 +278,26 @@ Phase 2 Phase 3             Phase 4
 
 ## Parallel Execution Summary
 
-| Phase                | Can Run In Parallel With |
-| -------------------- | ------------------------ |
-| 2.1 Ingestion        | 2.2 FFmpeg Integration   |
-| 3.x Compositions     | 2.x Media Pipeline       |
-| 4.1 Core Layout      | 4.2 Preview Player       |
-| 4.4 Inspector        | 4.5 Export Panel         |
-| 5.1-5.4 Integration  | Sequential (dependencies)|
-| 7.1 Plugin Framework | 6.x Render Service       |
-| 8.1 Observability    | 8.2 Performance          |
+| Phase                | Can Run In Parallel With  |
+| -------------------- | ------------------------- |
+| 2.1 Ingestion        | 2.2 FFmpeg Integration    |
+| 3.x Compositions     | 2.x Media Pipeline        |
+| 4.1 Core Layout      | 4.2 Preview Player        |
+| 4.4 Inspector        | 4.5 Export Panel          |
+| 5.1-5.4 Integration  | Sequential (dependencies) |
+| 7.1 Plugin Framework | 6.x Render Service        |
+| 8.1 Observability    | 8.2 Performance           |
 
 ## Milestones Mapping (Updated)
 
-| Milestone                                      | Phases            | Status |
-| ---------------------------------------------- | ----------------- | ------ |
-| M1: Ingestion + trimming + audio normalization | 1.1, 1.2, 2.1-2.4 | Done |
-| M2: Remotion compositions for intro/main/outro | 3.1-3.3           | Done |
+| Milestone                                      | Phases            | Status         |
+| ---------------------------------------------- | ----------------- | -------------- |
+| M1: Ingestion + trimming + audio normalization | 1.1, 1.2, 2.1-2.4 | Done           |
+| M2: Remotion compositions for intro/main/outro | 3.1-3.3           | Done           |
 | M3: Studio UI with timeline and preview        | 4.1-4.5           | Done (UI only) |
-| M4: End-to-end integration                     | 5.1-5.4           | Not Started |
-| M5: Render service integration                 | 6.1-6.3           | Not Started |
-| M6: Plugin framework with example              | 7.1-7.2           | Not Started |
+| M4: End-to-end integration                     | 5.1-5.4           | Not Started    |
+| M5: Render service integration                 | 6.1-6.3           | Not Started    |
+| M6: Plugin framework with example              | 7.1-7.2           | Not Started    |
 
 ## Next Steps (Priority Order)
 
