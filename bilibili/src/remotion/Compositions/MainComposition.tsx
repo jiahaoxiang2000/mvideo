@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
   AbsoluteFill,
   Sequence,
-  Video,
+  OffthreadVideo,
   interpolate,
   staticFile,
   useCurrentFrame,
@@ -132,8 +132,12 @@ export const MainComposition = (
 ) => {
   const { videoSrc, trimStartInFrames, trimEndInFrames, overlays } = props;
   const resolvedVideoSrc = resolveVideoSrc(videoSrc);
-  const clipStart = Math.max(0, trimStartInFrames);
-  const clipEnd = Math.max(clipStart + 1, trimEndInFrames);
+  
+  // OffthreadVideo uses:
+  // - trimBefore: frames to skip from the start
+  // - trimAfter: the frame number where the video should end
+  const trimBefore = Math.max(0, trimStartInFrames);
+  const trimAfter = Math.max(trimBefore + 1, trimEndInFrames);
 
   // Check if we have a valid video source
   const hasVideo = videoSrc && videoSrc.trim() !== "";
@@ -141,10 +145,10 @@ export const MainComposition = (
   return (
     <AbsoluteFill className="bg-black">
       {hasVideo ? (
-        <Video
+        <OffthreadVideo
           src={resolvedVideoSrc}
-          startFrom={clipStart}
-          endAt={clipEnd}
+          trimBefore={trimBefore}
+          trimAfter={trimAfter}
           style={{
             width: "100%",
             height: "100%",
