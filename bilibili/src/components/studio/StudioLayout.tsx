@@ -33,40 +33,49 @@ export const StudioLayout = ({
       <div className="flex-1 min-h-0">
         <ResizablePanelGroup orientation="vertical">
           {/* Upper Section: Resources | Preview | Inspector */}
-          <ResizablePanel defaultSize={65} minSize={30}>
+          <ResizablePanel defaultSize={65} minSize={30} maxSize={80}>
             <ResizablePanelGroup orientation="horizontal">
               {/* Left: Resources Panel */}
-              <ResizablePanel defaultSize={20} minSize={15} maxSize={35}>
-                <div className="h-full overflow-hidden border-r border-studio-border bg-studio-panel-bg">
+              <ResizablePanel defaultSize={20} minSize={10} maxSize={40}>
+                <div className="h-full border-r border-studio-border bg-studio-panel-bg">
                   {resourcesPanel}
                 </div>
               </ResizablePanel>
 
-              <ResizableHandle className="w-1 bg-studio-border hover:bg-studio-accent transition-colors cursor-col-resize" />
+              <ResizableHandle 
+                id="horizontal-resources-preview"
+                className="w-1 bg-studio-border hover:bg-studio-accent transition-colors cursor-col-resize" 
+              />
 
               {/* Center: Preview Panel */}
-              <ResizablePanel defaultSize={55} minSize={30}>
-                <div className="h-full overflow-hidden bg-studio-bg">
+              <ResizablePanel defaultSize={55} minSize={25} maxSize={70}>
+                <div className="h-full bg-studio-bg">
                   {previewPanel}
                 </div>
               </ResizablePanel>
 
-              <ResizableHandle className="w-1 bg-studio-border hover:bg-studio-accent transition-colors cursor-col-resize" />
+              <ResizableHandle 
+                id="horizontal-preview-inspector"
+                className="w-1 bg-studio-border hover:bg-studio-accent transition-colors cursor-col-resize" 
+              />
 
               {/* Right: Inspector Panel */}
-              <ResizablePanel defaultSize={25} minSize={15} maxSize={35}>
-                <div className="h-full overflow-hidden border-l border-studio-border bg-studio-panel-bg">
+              <ResizablePanel defaultSize={25} minSize={10} maxSize={40}>
+                <div className="h-full border-l border-studio-border bg-studio-panel-bg">
                   {inspectorPanel}
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
           </ResizablePanel>
 
-          <ResizableHandle className="h-1 bg-studio-border hover:bg-studio-accent transition-colors cursor-row-resize" />
+          <ResizableHandle 
+            id="vertical-upper-timeline"
+            className="h-1 bg-studio-border hover:bg-studio-accent transition-colors cursor-row-resize" 
+          />
 
           {/* Bottom: Timeline Panel */}
-          <ResizablePanel defaultSize={35} minSize={20} maxSize={50}>
-            <div className="h-full overflow-hidden border-t border-studio-border bg-studio-timeline-bg">
+          <ResizablePanel defaultSize={35} minSize={20} maxSize={70}>
+            <div className="h-full border-t border-studio-border bg-studio-timeline-bg">
               {timelinePanel}
             </div>
           </ResizablePanel>
