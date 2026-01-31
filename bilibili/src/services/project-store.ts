@@ -5,6 +5,7 @@ import { runOnProjectLoaded } from "./plugins";
 
 type ProjectState = {
   project: Project;
+  isDirty: boolean;
   setProject: (project: Project) => void;
   updateProject: (partial: Partial<Project>) => void;
   createProject: (config: {
@@ -38,12 +39,14 @@ const touchProject = (project: Project): Project => {
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
   project: createEmptyProject(),
+  isDirty: false,
   setProject: (project) => {
-    set({ project });
+    set({ project, isDirty: false });
     void runOnProjectLoaded(project);
   },
   updateProject: (partial) =>
     set((state) => ({
+      isDirty: true,
       project: touchProject({
         ...state.project,
         ...partial,
@@ -77,7 +80,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       throw new Error(payload.message ?? "Failed to create project.");
     }
     
-    set({ project: payload.data });
+    set({ project: payload.data, isDirty: false });
     void runOnProjectLoaded(payload.data);
     
     // Store as last project
@@ -95,11 +98,12 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     if (!response.ok || payload.type !== "success") {
       throw new Error(payload.message ?? "Failed to modify project.");
     }
-    set({ project: payload.data });
+    set({ project: payload.data, isDirty: false });
     return payload.data;
   },
   addAsset: (asset) =>
     set((state) => ({
+      isDirty: true,
       project: touchProject({
         ...state.project,
         assets: [...state.project.assets, asset],
@@ -107,6 +111,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     })),
   removeAsset: (assetId) =>
     set((state) => ({
+      isDirty: true,
       project: touchProject({
         ...state.project,
         assets: state.project.assets.filter((asset) => asset.id !== assetId),
@@ -114,6 +119,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     })),
   updateAsset: (assetId, partial) =>
     set((state) => ({
+      isDirty: true,
       project: touchProject({
         ...state.project,
         assets: state.project.assets.map((asset) => {
@@ -129,6 +135,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     })),
   addTrack: (track) =>
     set((state) => ({
+      isDirty: true,
       project: touchProject({
         ...state.project,
         tracks: [...state.project.tracks, track],
@@ -136,6 +143,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     })),
   removeTrack: (trackId) =>
     set((state) => ({
+      isDirty: true,
       project: touchProject({
         ...state.project,
         tracks: state.project.tracks.filter((track) => track.id !== trackId),
@@ -143,6 +151,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     })),
   updateTrack: (trackId, partial) =>
     set((state) => ({
+      isDirty: true,
       project: touchProject({
         ...state.project,
         tracks: state.project.tracks.map((track) => {
@@ -158,6 +167,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     })),
   addClip: (trackId, clip) =>
     set((state) => ({
+      isDirty: true,
       project: touchProject({
         ...state.project,
         tracks: state.project.tracks.map((track) => {
@@ -174,6 +184,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     })),
   updateClip: (clipId, partial) =>
     set((state) => ({
+      isDirty: true,
       project: touchProject({
         ...state.project,
         tracks: state.project.tracks.map((track) => ({
@@ -193,6 +204,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     })),
   removeClip: (clipId) =>
     set((state) => ({
+      isDirty: true,
       project: touchProject({
         ...state.project,
         tracks: state.project.tracks.map((track) => ({
@@ -207,12 +219,17 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     if (!response.ok || payload.type !== "success") {
       throw new Error(payload.message ?? "Failed to load project.");
     }
-    set({ project: payload.data });
+    set({ project: payload.data, isDirty: false });
     void runOnProjectLoaded(payload.data);
     return payload.data;
   },
   saveProject: async (projectOverride) => {
     const target = projectOverride ?? get().project;
+    
+    if (!target.id) {
+      throw new Error("Cannot save project without an ID.");
+    }
+
     const response = await fetch(`/api/projects/${target.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -222,7 +239,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     if (!response.ok || payload.type !== "success") {
       throw new Error(payload.message ?? "Failed to save project.");
     }
-    set({ project: payload.data });
+    set({ project: payload.data, isDirty: false });
     return payload.data;
   },
   listProjects: async () => {

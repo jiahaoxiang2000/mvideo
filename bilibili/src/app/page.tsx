@@ -40,7 +40,7 @@ const Home: NextPage = () => {
     "select",
   );
   const { toggleKeymaps } = useUIStore();
-  const { project, updateClip, updateProject, createProject, loadProject, saveProject, listProjects } = useProjectStore();
+  const { project, isDirty, updateClip, updateProject, createProject, loadProject, saveProject, listProjects } = useProjectStore();
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [isProjectReady, setIsProjectReady] = useState(false);
@@ -102,7 +102,7 @@ const Home: NextPage = () => {
   }, [compositionPreviewConfig.fps, compositionPreviewConfig.height, compositionPreviewConfig.width, project.durationInFrames, project.fps, project.height, project.width, totalFrames, updateProject]);
 
   useEffect(() => {
-    if (!isProjectReady) {
+    if (!isProjectReady || !isDirty) {
       return;
     }
 
@@ -117,7 +117,7 @@ const Home: NextPage = () => {
     return () => {
       window.clearTimeout(handle);
     };
-  }, [isProjectReady, project, saveProject]);
+  }, [isProjectReady, project, isDirty, saveProject]);
 
   const seekToFrame = useCallback(
     (frame: number) => {
