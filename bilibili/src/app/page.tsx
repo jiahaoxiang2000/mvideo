@@ -37,6 +37,7 @@ const Home: NextPage = () => {
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [rippleEnabled, setRippleEnabled] = useState(false);
   const [zoom, setZoom] = useState(100);
+  const [zoomBounds, setZoomBounds] = useState({ min: 10, max: 400 });
   const [activeTool, setActiveTool] = useState<"select" | "razor" | "hand">(
     "select",
   );
@@ -162,12 +163,12 @@ const Home: NextPage = () => {
   }, [seekToFrame, totalFrames]);
 
   const handleZoomIn = useCallback(() => {
-    setZoom((prev) => Math.min(prev + 10, 200));
-  }, []);
+    setZoom((prev) => Math.min(prev + 10, zoomBounds.max));
+  }, [zoomBounds.max]);
 
   const handleZoomOut = useCallback(() => {
-    setZoom((prev) => Math.max(prev - 10, 25));
-  }, []);
+    setZoom((prev) => Math.max(prev - 10, zoomBounds.min));
+  }, [zoomBounds.min]);
 
   const handleUndo = useCallback(() => {
     console.log("Undo");
@@ -360,6 +361,7 @@ const Home: NextPage = () => {
             onSeek={seekToFrame}
             onClipSelect={handleClipSelect}
             onZoomChange={setZoom}
+            onZoomBoundsChange={setZoomBounds}
           />
         }
       />

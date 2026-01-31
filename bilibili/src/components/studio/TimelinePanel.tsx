@@ -29,6 +29,7 @@ interface TimelinePanelProps {
   onSeek: (frame: number) => void;
   onClipSelect?: (clipId: string, trackId: string) => void;
   onZoomChange?: (zoom: number) => void;
+  onZoomBoundsChange?: (bounds: { min: number; max: number }) => void;
 }
 
 export const TimelinePanel = ({
@@ -38,6 +39,7 @@ export const TimelinePanel = ({
   onSeek,
   onClipSelect,
   onZoomChange,
+  onZoomBoundsChange,
 }: TimelinePanelProps) => {
   const { project, updateClip, updateProject, addAsset, addTrack, addClip } = useProjectStore();
 
@@ -204,6 +206,7 @@ export const TimelinePanel = ({
       onSelectClip={handleSelectClip}
       onAssetDrop={handleAssetDrop}
       onZoomChange={onZoomChange}
+      onZoomBoundsChange={onZoomBoundsChange}
     />
   );
 };

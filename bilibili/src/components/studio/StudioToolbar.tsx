@@ -193,6 +193,8 @@ export const StudioToolbar = ({
   onRedo,
   onToolChange,
 }: StudioToolbarProps) => {
+  const zoomLabel = Number.isInteger(zoom) ? `${zoom}` : zoom.toFixed(1);
+
   return (
     <div className="flex items-center justify-between h-full px-3">
       {/* Left Section: Project Info & Undo/Redo */}
@@ -312,7 +314,7 @@ export const StudioToolbar = ({
         <ToolbarDivider />
         <div className="flex items-center gap-1">
           <ToolbarButton icon={<ZoomOutIcon />} onClick={onZoomOut} shortcut="-" />
-          <span className="text-studio-text text-xs w-10 text-center">{zoom}%</span>
+          <span className="text-studio-text text-xs w-10 text-center">{zoomLabel}%</span>
           <ToolbarButton icon={<ZoomInIcon />} onClick={onZoomIn} shortcut="+" />
         </div>
       </div>

@@ -22,6 +22,7 @@ interface TimelineProps {
   onSelectClip: (clipId: string, trackId: string) => void;
   onAssetDrop?: (event: React.DragEvent) => void;
   onZoomChange?: (zoom: number) => void;
+  onZoomBoundsChange?: (bounds: { min: number; max: number }) => void;
 }
 
 const TRACK_HEIGHT = 48;
@@ -37,17 +38,27 @@ export const Timeline: React.FC<TimelineProps> = ({
   onSelectClip,
   onAssetDrop,
   onZoomChange,
+  onZoomBoundsChange,
 }) => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const [selectedClipId, setSelectedClipId] = useState<string | null>(null);
+  const [viewportWidth, setViewportWidth] = useState(0);
   const assetsById = useMemo(() => {
     return new Map<string, Asset>(project.assets.map((asset) => [asset.id, asset]));
   }, [project.assets]);
 
   // Calculate timeline width based on zoom
   // zoom 100% = 2 pixels per frame
+  const durationInFrames = project.durationInFrames ?? 1200;
+  const availableWidth = Math.max(0, viewportWidth - TRACK_HEADER_WIDTH);
+  const fitZoom = durationInFrames > 0 && availableWidth > 0
+    ? (availableWidth / durationInFrames) * 50
+    : zoom;
+  const minZoom = Math.max(0.1, Math.min(10, fitZoom));
+  const maxZoom = Math.max(400, Math.ceil(fitZoom * 8));
   const pixelsPerFrame = (zoom / 100) * 2;
-  const timelineWidth = (project.durationInFrames ?? 1200) * pixelsPerFrame;
+  const timelineWidth = durationInFrames * pixelsPerFrame;
+  const zoomLabel = Number.isInteger(zoom) ? `${zoom}` : zoom.toFixed(1);
 
   const snapPoints = useMemo(() => {
     if (!snapEnabled) return [];
@@ -99,6 +110,41 @@ export const Timeline: React.FC<TimelineProps> = ({
     [onAssetDrop]
   );
 
+  useEffect(() => {
+    const element = timelineRef.current;
+    if (!element) return;
+
+    const updateWidth = () => {
+      setViewportWidth(element.clientWidth);
+    };
+
+    updateWidth();
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(() => updateWidth());
+      observer.observe(element);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
+
+  useEffect(() => {
+    onZoomBoundsChange?.({ min: minZoom, max: maxZoom });
+  }, [minZoom, maxZoom, onZoomBoundsChange]);
+
+  useEffect(() => {
+    if (!onZoomChange) return;
+    if (zoom < minZoom) {
+      onZoomChange(minZoom);
+      return;
+    }
+    if (zoom > maxZoom) {
+      onZoomChange(maxZoom);
+    }
+  }, [zoom, minZoom, maxZoom, onZoomChange]);
+
   // Auto-scroll to keep playhead visible
   useEffect(() => {
     if (!timelineRef.current) return;
@@ -140,14 +186,15 @@ export const Timeline: React.FC<TimelineProps> = ({
             <span className="text-xs text-studio-text-muted">Zoom</span>
             <input
               type="range"
-              min="10"
-              max="400"
+              min={minZoom}
+              max={maxZoom}
+              step={minZoom < 1 ? 0.1 : 1}
               value={zoom}
-              onChange={(e) => onZoomChange?.(parseInt(e.target.value))}
+              onChange={(e) => onZoomChange?.(parseFloat(e.target.value))}
               className="w-24 h-1 bg-studio-border rounded-lg appearance-none cursor-pointer accent-studio-accent"
             />
             <span className="text-[10px] text-studio-text-muted w-8">
-              {zoom}%
+              {zoomLabel}%
             </span>
           </div>
         </div>
