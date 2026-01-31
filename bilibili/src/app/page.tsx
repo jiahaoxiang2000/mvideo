@@ -7,17 +7,13 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import {
   defaultMyCompProps,
-  CompositionProps,
-  DURATION_IN_FRAMES,
-  VIDEO_FPS,
-  VIDEO_HEIGHT,
-  VIDEO_WIDTH,
+  MyCompProps,
 } from "../../types/constants";
 import { RenderControls } from "../components/RenderControls";
-import { Main } from "../remotion/MyComp/Main";
 import { Toolbar } from "../components/Toolbar";
 import { StudioLayout } from "../components/StudioLayout";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { compositionPreviewConfig } from "../remotion/preview-config";
 
 const clampFrame = (frame: number, totalFrames: number) =>
   Math.min(Math.max(frame, 0), totalFrames - 1);
@@ -34,7 +30,7 @@ const formatTimecode = (frame: number, fps: number) => {
 
 const Home: NextPage = () => {
   const [text, setText] = useState<string>(defaultMyCompProps.title);
-  const totalFrames = DURATION_IN_FRAMES;
+  const totalFrames = compositionPreviewConfig.durationInFrames;
   const [currentFrame, setCurrentFrame] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [snapEnabled, setSnapEnabled] = useState(true);
@@ -120,7 +116,7 @@ const Home: NextPage = () => {
     },
   ];
 
-  const inputProps: z.infer<typeof CompositionProps> = useMemo(() => {
+  const inputProps: z.infer<typeof MyCompProps> = useMemo(() => {
     return {
       title: text,
     };
@@ -209,10 +205,10 @@ const Home: NextPage = () => {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-3 text-xs">
                 <span className="rounded-full border border-unfocused-border-color px-3 py-1">
-                  {VIDEO_WIDTH}x{VIDEO_HEIGHT}
+                  {compositionPreviewConfig.width}x{compositionPreviewConfig.height}
                 </span>
                 <span className="rounded-full border border-unfocused-border-color px-3 py-1">
-                  {VIDEO_FPS} fps
+                  {compositionPreviewConfig.fps} fps
                 </span>
                 <span className="rounded-full border border-unfocused-border-color px-3 py-1">
                   {totalFrames} frames
@@ -220,7 +216,7 @@ const Home: NextPage = () => {
               </div>
               <div className="flex items-center gap-2 text-[11px]">
                 <span className="rounded-full border border-unfocused-border-color px-3 py-1">
-                  {formatTimecode(currentFrame, VIDEO_FPS)}
+                  {formatTimecode(currentFrame, compositionPreviewConfig.fps)}
                 </span>
                 <span className="rounded-full border border-unfocused-border-color px-3 py-1">
                   Frame {currentFrame}
@@ -230,12 +226,12 @@ const Home: NextPage = () => {
             <div className="mt-5 overflow-hidden rounded-2xl border border-unfocused-border-color shadow-[0_0_120px_rgba(15,23,42,0.12)]">
               <Player
                 ref={playerRef}
-                component={Main}
+                component={compositionPreviewConfig.component}
                 inputProps={inputProps}
-                durationInFrames={DURATION_IN_FRAMES}
-                fps={VIDEO_FPS}
-                compositionHeight={VIDEO_HEIGHT}
-                compositionWidth={VIDEO_WIDTH}
+                durationInFrames={compositionPreviewConfig.durationInFrames}
+                fps={compositionPreviewConfig.fps}
+                compositionHeight={compositionPreviewConfig.height}
+                compositionWidth={compositionPreviewConfig.width}
                 style={{
                   width: "100%",
                 }}

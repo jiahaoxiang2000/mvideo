@@ -71,10 +71,10 @@ Based on [ARCH.md](./ARCH.md)
 
 ### 3.2 Composition Props & Configuration
 
-- [ ] Define prop types for each composition
-- [ ] Create composition registry
-- [ ] Implement props resolver from Project Graph
-- [ ] Add composition preview configuration
+- [x] Define prop types for each composition
+- [x] Create composition registry
+- [x] Implement props resolver from Project Graph
+- [x] Add composition preview configuration
 
 ### 3.3 Overlay System
 

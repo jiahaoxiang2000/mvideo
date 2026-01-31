@@ -6,7 +6,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { CompositionProps } from "../../../types/constants";
+import { MyCompProps } from "../../../types/constants";
 import { NextLogo } from "./NextLogo";
 import { loadFont, fontFamily } from "@remotion/google-fonts/Inter";
 import { Rings } from "./Rings";
@@ -16,7 +16,7 @@ loadFont("normal", {
   subsets: ["latin"],
   weights: ["400", "700"],
 });
-export const Main = ({ title }: z.infer<typeof CompositionProps>) => {
+export const Main = ({ title }: z.infer<typeof MyCompProps>) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 

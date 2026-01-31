@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { IntroCompositionProps, OutroCompositionProps } from "./constants";
 
 export const AssetKindSchema = z.enum(["video", "audio", "image", "text"]);
 
@@ -20,7 +21,7 @@ export const ClipSchema = z.object({
   trimStartFrame: z.number().int().nonnegative().optional(),
 });
 
-export const TrackKindSchema = z.enum(["video", "audio"]);
+export const TrackKindSchema = z.enum(["video", "audio", "overlay"]);
 
 export const TrackSchema = z.object({
   id: z.string(),
@@ -41,6 +42,8 @@ export const ProjectSchema = z.object({
   durationInFrames: z.number().int().positive(),
   assets: z.array(AssetSchema),
   tracks: z.array(TrackSchema),
+  intro: IntroCompositionProps.optional(),
+  outro: OutroCompositionProps.optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });

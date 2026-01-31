@@ -1,14 +1,17 @@
 import { z } from "zod";
 export const COMP_NAME = "MyComp";
+export const NEXT_LOGO_COMP_NAME = "NextLogo";
 
 export const INTRO_COMP_NAME = "IntroComposition";
 export const MAIN_COMP_NAME = "MainComposition";
 export const OUTRO_COMP_NAME = "OutroComposition";
 export const FINAL_COMP_NAME = "FinalComposition";
 
-export const CompositionProps = z.object({
+export const MyCompProps = z.object({
   title: z.string(),
 });
+
+export const CompositionProps = MyCompProps;
 
 export const IntroCompositionProps = z.object({
   title: z.string(),
@@ -59,6 +62,10 @@ export const OutroCompositionProps = z.object({
   ctaText: z.string(),
 });
 
+export const NextLogoProps = z.object({
+  outProgress: z.number(),
+});
+
 export const FinalCompositionProps = z.object({
   intro: IntroCompositionProps.optional(),
   main: MainCompositionProps,
@@ -68,7 +75,7 @@ export const FinalCompositionProps = z.object({
   outroDurationInFrames: z.number(),
 });
 
-export const defaultMyCompProps: z.infer<typeof CompositionProps> = {
+export const defaultMyCompProps: z.infer<typeof MyCompProps> = {
   title: "Next.js and Remotion",
 };
 
@@ -117,6 +124,10 @@ export const defaultOutroProps: z.infer<typeof OutroCompositionProps> = {
   headline: "Thanks for watching",
   subline: "New episodes every Friday",
   ctaText: "Subscribe & Share",
+};
+
+export const defaultNextLogoProps: z.infer<typeof NextLogoProps> = {
+  outProgress: 0,
 };
 
 export const DURATION_IN_FRAMES = 200;
