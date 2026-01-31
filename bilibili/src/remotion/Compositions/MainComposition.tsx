@@ -2,10 +2,12 @@ import { z } from "zod";
 import {
   AbsoluteFill,
   Sequence,
+  Video,
   OffthreadVideo,
   interpolate,
   staticFile,
   useCurrentFrame,
+  useVideoConfig,
 } from "remotion";
 import type { ReactNode } from "react";
 import {
@@ -132,29 +134,65 @@ export const MainComposition = (
 ) => {
   const { videoSrc, trimStartInFrames, trimEndInFrames, overlays } = props;
   const resolvedVideoSrc = resolveVideoSrc(videoSrc);
+  const { fps } = useVideoConfig();
   
-  // OffthreadVideo uses:
-  // - trimBefore: frames to skip from the start
-  // - trimAfter: the frame number where the video should end
-  const trimBefore = Math.max(0, trimStartInFrames);
-  const trimAfter = Math.max(trimBefore + 1, trimEndInFrames);
+  // Video component uses:
+  // - startFrom: frame to start playing from (skip this many frames from the beginning)
+  // - endAt: frame to stop playing at (absolute frame number from start of video)
+  const startFrom = Math.max(0, trimStartInFrames);
+  const endAt = Math.max(startFrom + 1, trimEndInFrames);
 
   // Check if we have a valid video source
   const hasVideo = videoSrc && videoSrc.trim() !== "";
 
+  // Debug logging (will show in browser console)
+  if (typeof window !== "undefined" && hasVideo) {
+    console.log("[MainComposition] Video config:", {
+      src: resolvedVideoSrc,
+      startFrom,
+      endAt,
+      duration: endAt - startFrom,
+      fps,
+    });
+  }
+
   return (
     <AbsoluteFill className="bg-black">
       {hasVideo ? (
-        <OffthreadVideo
-          src={resolvedVideoSrc}
-          trimBefore={trimBefore}
-          trimAfter={trimAfter}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        />
+        <>
+          <Video
+            src={resolvedVideoSrc}
+            startFrom={startFrom}
+            endAt={endAt}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+          {/* Debug overlay - remove after testing */}
+          {typeof window !== "undefined" && (
+            <div
+              style={{
+                position: "absolute",
+                top: 10,
+                left: 10,
+                background: "rgba(0,0,0,0.7)",
+                color: "white",
+                padding: "8px 12px",
+                fontSize: 12,
+                fontFamily: "monospace",
+                borderRadius: 4,
+                pointerEvents: "none",
+                zIndex: 9999,
+              }}
+            >
+              <div>Src: {resolvedVideoSrc.substring(0, 50)}...</div>
+              <div>Start: {startFrom} | End: {endAt}</div>
+              <div>Duration: {endAt - startFrom} frames</div>
+            </div>
+          )}
+        </>
       ) : (
         <div className="flex items-center justify-center w-full h-full">
           <div className="text-center text-gray-400">

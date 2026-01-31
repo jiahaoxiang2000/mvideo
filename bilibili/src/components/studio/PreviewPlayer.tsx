@@ -191,6 +191,19 @@ export const PreviewPlayer = ({
               clickToPlay={false}
               doubleClickToFullscreen={false}
               spaceKeyToPlayOrPause={false}
+              renderLoading={() => (
+                <div style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "#000",
+                  color: "#888",
+                }}>
+                  Loading video...
+                </div>
+              )}
             />
           </div>
         </div>

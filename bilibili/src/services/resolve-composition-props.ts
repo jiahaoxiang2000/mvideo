@@ -121,8 +121,14 @@ export const resolveProjectToMainCompositionProps = (project: Project) => {
   const primaryClip = getPrimaryVideoClip(project.tracks);
   const asset = project.assets.find((item) => item.id === primaryClip?.assetId);
 
+  // If no clip or asset, return empty composition (no default video)
   if (!primaryClip || !asset) {
-    return MainCompositionProps.parse(defaultMainProps);
+    return MainCompositionProps.parse({
+      videoSrc: "", // Empty string instead of default video that doesn't exist
+      trimStartInFrames: 0,
+      trimEndInFrames: 1,
+      overlays: [],
+    });
   }
 
   const trimStartInFrames = primaryClip.trimStartFrame ?? 0;
@@ -136,7 +142,7 @@ export const resolveProjectToMainCompositionProps = (project: Project) => {
     overlays:
       overlays.length > 0
         ? OverlayItemProps.array().parse(overlays)
-        : defaultMainProps.overlays,
+        : [],
   });
 };
 
