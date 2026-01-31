@@ -8,12 +8,7 @@ type ProjectState = {
   isDirty: boolean;
   setProject: (project: Project) => void;
   updateProject: (partial: Partial<Project>) => void;
-  createProject: (config: {
-    name: string;
-    width: number;
-    height: number;
-    fps: number;
-  }) => Promise<Project>;
+  createProject: (config: { name: string }) => Promise<Project>;
   modifyProject: (projectId: string, partial: Partial<Project>) => Promise<Project>;
   addAsset: (asset: Asset) => void;
   removeAsset: (assetId: string) => void;
@@ -54,37 +49,27 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   createProject: async (config) => {
     const projectId = globalThis.crypto?.randomUUID?.() ?? `project-${Date.now()}`;
     const now = new Date().toISOString();
-    
+
     const newProject: Project = {
       schemaVersion: 1,
       id: projectId,
-      name: config.name,
-      width: config.width,
-      height: config.height,
-      fps: config.fps,
+      name: config.name || "Untitled Project",
+      width: 1280,
+      height: 720,
+      fps: 30,
       assets: [],
       tracks: [],
       createdAt: now,
       updatedAt: now,
     };
 
-    const response = await fetch("/api/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newProject),
-    });
-    const payload = await response.json();
-    if (!response.ok || payload.type !== "success") {
-      throw new Error(payload.message ?? "Failed to create project.");
-    }
-    
-    set({ project: payload.data, isDirty: false });
-    void runOnProjectLoaded(payload.data);
-    
+    set({ project: newProject, isDirty: true });
+    void runOnProjectLoaded(newProject);
+
     // Store as last project
-    globalThis.localStorage?.setItem("mvideo:lastProjectId", payload.data.id);
-    
-    return payload.data;
+    globalThis.localStorage?.setItem("mvideo:lastProjectId", newProject.id);
+
+    return newProject;
   },
   modifyProject: async (projectId, partial) => {
     const response = await fetch(`/api/projects/${projectId}`, {
