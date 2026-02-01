@@ -87,3 +87,42 @@ Thumbs.db
 # uv
 uv.lock
 bilibili/storage/
+
+# C++ / CMake
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+*.dSYM/
+*.dir/
+
+# CMake build directory
+build/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+CMakeScripts/
+*.cmake
+*.txt
+
+# Qt
+moc_*/
+qrc_*/
+ui_*.h
+*.qmlc
+*.pdb
+
+# Debug/Release builds
+Debug/
+Release/
+x64/
+x86/
+obj/
+bin/
+lib/
+.cache/clangd/index

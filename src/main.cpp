@@ -1,18 +1,16 @@
-#include <QApplication>
 #include "MainWindow.h"
+#include <QApplication>
 
-int main(int argc, char *argv[])
-{
-    QApplication app(argc, argv);
-    
-    // Set application metadata
-    app.setApplicationName("mvideo");
-    app.setApplicationDisplayName("MVideo Editor");
-    app.setOrganizationName("OpenCode");
-    app.setOrganizationDomain("opencode.ai");
+int main(int argc, char *argv[]) {
+  QApplication app(argc, argv);
 
-    MainWindow window;
-    window.show();
+  // Set application metadata
+  app.setApplicationName("mvideo");
+  app.setApplicationDisplayName("MVideo Editor - bilibili");
+  app.setOrganizationName("isomoses");
 
-    return app.exec();
+  MainWindow window;
+  window.show();
+
+  return app.exec();
 }
