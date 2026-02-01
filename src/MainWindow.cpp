@@ -7,15 +7,135 @@
 #include <QKeySequence>
 #include <QMenu>
 #include <QMenuBar>
+#include <QMetaObject>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
+#include <QOpenGLWidget>
+#include <QtGlobal>
 #include <QSlider>
 #include <QToolButton>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QDebug>
+#include <mpv/render.h>
 #include <mpv/render_gl.h>
 #include <cmath>
 #include <clocale>
+
+namespace {
+
+class MpvVideoWidget : public QOpenGLWidget, protected QOpenGLFunctions
+{
+public:
+    explicit MpvVideoWidget(QWidget *parent = nullptr)
+        : QOpenGLWidget(parent)
+        , mpv(nullptr)
+        , mpvGl(nullptr)
+    {
+        setUpdateBehavior(QOpenGLWidget::NoPartialUpdate);
+    }
+
+    ~MpvVideoWidget() override
+    {
+        shutdown();
+    }
+
+    void setMpv(mpv_handle *handle)
+    {
+        mpv = handle;
+        if (mpv && context() && !mpvGl) {
+            initRenderContext();
+        }
+    }
+
+    void shutdown()
+    {
+        if (mpvGl) {
+            mpv_render_context_free(mpvGl);
+            mpvGl = nullptr;
+        }
+        mpv = nullptr;
+    }
+
+protected:
+    void initializeGL() override
+    {
+        initializeOpenGLFunctions();
+        if (mpv && !mpvGl) {
+            initRenderContext();
+        }
+    }
+
+    void paintGL() override
+    {
+        if (!mpvGl) {
+            glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+            return;
+        }
+
+        const qreal dpr = devicePixelRatio();
+        mpv_opengl_fbo fbo = {
+            static_cast<int>(defaultFramebufferObject()),
+            static_cast<int>(width() * dpr),
+            static_cast<int>(height() * dpr),
+            0
+        };
+        int flip = 1;
+        mpv_render_param params[] = {
+            { MPV_RENDER_PARAM_OPENGL_FBO, &fbo },
+            { MPV_RENDER_PARAM_FLIP_Y, &flip },
+            { MPV_RENDER_PARAM_INVALID, nullptr }
+        };
+        mpv_render_context_render(mpvGl, params);
+    }
+
+    void resizeGL(int w, int h) override
+    {
+        Q_UNUSED(w);
+        Q_UNUSED(h);
+        update();
+    }
+
+private:
+    mpv_handle *mpv;
+    mpv_render_context *mpvGl;
+
+    static void *getProcAddress(void *ctx, const char *name)
+    {
+        Q_UNUSED(ctx);
+        QOpenGLContext *glctx = QOpenGLContext::currentContext();
+        if (!glctx) {
+            return nullptr;
+        }
+        return reinterpret_cast<void *>(glctx->getProcAddress(QByteArray(name)));
+    }
+
+    static void onMpvUpdate(void *ctx)
+    {
+        MpvVideoWidget *self = static_cast<MpvVideoWidget *>(ctx);
+        QMetaObject::invokeMethod(self, "update", Qt::QueuedConnection);
+    }
+
+    void initRenderContext()
+    {
+        mpv_opengl_init_params glInit = { getProcAddress, this, nullptr };
+        mpv_render_param params[] = {
+            { MPV_RENDER_PARAM_API_TYPE, const_cast<char *>(MPV_RENDER_API_TYPE_OPENGL) },
+            { MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, &glInit },
+            { MPV_RENDER_PARAM_INVALID, nullptr }
+        };
+        if (mpv_render_context_create(&mpvGl, mpv, params) < 0) {
+            qDebug() << "mpv render context init failed";
+            mpvGl = nullptr;
+            return;
+        }
+        mpv_render_context_set_update_callback(mpvGl, onMpvUpdate, this);
+    }
+};
+
+} // namespace
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -46,7 +166,7 @@ void MainWindow::setupUI()
     layout->setContentsMargins(0, 0, 0, 0);
 
     // Create a container for the video
-    videoContainer = new QWidget(this);
+    videoContainer = new MpvVideoWidget(this);
     videoContainer->setMinimumSize(640, 480);
     layout->addWidget(videoContainer, 2);
 
@@ -84,6 +204,9 @@ void MainWindow::setupUI()
 
 MainWindow::~MainWindow()
 {
+    if (videoContainer) {
+        videoContainer->shutdown();
+    }
     if (mpv) {
         mpv_terminate_destroy(mpv);
     }
@@ -103,15 +226,18 @@ void MainWindow::initializeMpv()
     // Enable default bindings
     mpv_set_option_string(mpv, "input-default-bindings", "yes");
     mpv_set_option_string(mpv, "input-vo-keyboard", "yes");
-    
-    // Set the window ID for MPV to render into
-    int64_t wid = videoContainer->winId();
-    mpv_set_property(mpv, "wid", MPV_FORMAT_INT64, &wid);
+
+    // Use libmpv render API (required on Wayland)
+    mpv_set_option_string(mpv, "vo", "libmpv");
 
     // Initialize the MPV instance
     if (mpv_initialize(mpv) < 0) {
         qDebug() << "mpv init failed";
         return;
+    }
+
+    if (videoContainer) {
+        videoContainer->setMpv(mpv);
     }
     
     // Play a test video (optional, can be removed later)
