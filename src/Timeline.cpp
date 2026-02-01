@@ -3,6 +3,10 @@
 #include <QMouseEvent>
 #include <QFileDialog>
 #include <QSizePolicy>
+#include <QProcess>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 Timeline::Timeline(QWidget *parent)
     : QWidget(parent)
@@ -267,11 +271,14 @@ void Timeline::onAddClipClicked()
         QString(),
         "Video Files (*.mp4 *.avi *.mkv *.mov);;All Files (*)"
     );
-    
+
     if (!fileName.isEmpty()) {
         // Add clip at the end of timeline
         double startTime = totalDuration();
-        double duration = 5.0; // Default duration, should be detected from file
+        double duration = getVideoDuration(fileName);
+        if (duration <= 0.0) {
+            duration = 5.0; // Fallback default duration
+        }
         addClip(fileName, startTime, duration);
     }
 }
@@ -281,4 +288,25 @@ void Timeline::onRemoveClipClicked()
     if (m_selectedClipIndex >= 0) {
         removeClip(m_selectedClipIndex);
     }
+}
+
+double Timeline::getVideoDuration(const QString &filePath) const
+{
+    // Use ffprobe to get video duration
+    QProcess process;
+    QStringList arguments;
+    arguments << "-v" << "error"
+              << "-show_entries" << "format=duration"
+              << "-of" << "default=noprint_wrappers=1:nokey=1"
+              << filePath;
+
+    process.start("ffprobe", arguments);
+    if (!process.waitForFinished(5000)) {
+        return 0.0;
+    }
+
+    QString output = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+    bool ok;
+    double duration = output.toDouble(&ok);
+    return ok ? duration : 0.0;
 }

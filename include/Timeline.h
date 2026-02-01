@@ -6,6 +6,9 @@
 #include <QPushButton>
 #include "Clip.h"
 
+// Forward declaration for mpv
+struct mpv_handle;
+
 class Timeline : public QWidget
 {
     Q_OBJECT
@@ -62,6 +65,7 @@ private:
     void drawClip(QPainter &painter, const Clip &clip, int index);
     double pixelToTime(int pixel) const;
     int timeToPixel(double time) const;
+    double getVideoDuration(const QString &filePath) const;
 };
 
 #endif // TIMELINE_H
