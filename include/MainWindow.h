@@ -8,7 +8,6 @@ class QSlider;
 class QToolButton;
 class QTimer;
 class Timeline;
-class MpvVideoWidget;
 
 class MainWindow : public QMainWindow
 {
@@ -29,7 +28,7 @@ private slots:
 
 private:
     mpv_handle *mpv;
-    MpvVideoWidget *videoContainer;
+    QWidget *videoContainer;
     QToolButton *playPauseButton;
     QSlider *seekSlider;
     QTimer *positionTimer;

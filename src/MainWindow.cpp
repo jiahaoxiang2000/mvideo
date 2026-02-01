@@ -120,7 +120,7 @@ private:
 
     void initRenderContext()
     {
-        mpv_opengl_init_params glInit = { getProcAddress, this, nullptr };
+        mpv_opengl_init_params glInit = { getProcAddress, this };
         mpv_render_param params[] = {
             { MPV_RENDER_PARAM_API_TYPE, const_cast<char *>(MPV_RENDER_API_TYPE_OPENGL) },
             { MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, &glInit },
@@ -205,7 +205,9 @@ void MainWindow::setupUI()
 MainWindow::~MainWindow()
 {
     if (videoContainer) {
-        videoContainer->shutdown();
+        if (auto *mpvWidget = dynamic_cast<MpvVideoWidget *>(videoContainer)) {
+            mpvWidget->shutdown();
+        }
     }
     if (mpv) {
         mpv_terminate_destroy(mpv);
@@ -237,7 +239,9 @@ void MainWindow::initializeMpv()
     }
 
     if (videoContainer) {
-        videoContainer->setMpv(mpv);
+        if (auto *mpvWidget = dynamic_cast<MpvVideoWidget *>(videoContainer)) {
+            mpvWidget->setMpv(mpv);
+        }
     }
     
     // Play a test video (optional, can be removed later)
