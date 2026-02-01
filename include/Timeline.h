@@ -39,6 +39,7 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
     
 private slots:
     void onAddClipClicked();
@@ -48,6 +49,7 @@ private:
     QVector<Clip> m_clips;
     int m_selectedClipIndex;
     double m_pixelsPerSecond;
+    double m_scrollOffset;
     
     // UI elements
     QPushButton *m_addClipButton;
@@ -56,6 +58,7 @@ private:
     // Mouse interaction
     bool m_isDragging;
     bool m_isResizing;
+    bool m_isPanning;
     int m_dragClipIndex;
     QPoint m_lastMousePos;
     

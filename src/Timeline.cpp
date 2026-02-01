@@ -1,6 +1,7 @@
 #include "Timeline.h"
 #include <QPainter>
 #include <QMouseEvent>
+#include <QWheelEvent>
 #include <QFileDialog>
 #include <QSizePolicy>
 #include <QProcess>
@@ -12,8 +13,10 @@ Timeline::Timeline(QWidget *parent)
     : QWidget(parent)
     , m_selectedClipIndex(-1)
     , m_pixelsPerSecond(50.0)
+    , m_scrollOffset(0.0)
     , m_isDragging(false)
     , m_isResizing(false)
+    , m_isPanning(false)
     , m_dragClipIndex(-1)
 {
     setupUI();
@@ -200,6 +203,10 @@ void Timeline::mousePressEvent(QMouseEvent *event)
             m_removeClipButton->setEnabled(false);
             update();
         }
+    } else if (event->button() == Qt::MiddleButton) {
+        m_isPanning = true;
+        m_lastMousePos = event->pos();
+        setCursor(Qt::ClosedHandCursor);
     }
 }
 
@@ -207,7 +214,7 @@ void Timeline::mouseMoveEvent(QMouseEvent *event)
 {
     if (m_isDragging && m_dragClipIndex >= 0) {
         int dx = event->pos().x() - m_lastMousePos.x();
-        double dt = pixelToTime(dx);
+        double dt = dx / m_pixelsPerSecond; // Use raw pixels for drag
         
         Clip &clip = m_clips[m_dragClipIndex];
         double newStartTime = clip.startTime() + dt;
@@ -217,6 +224,12 @@ void Timeline::mouseMoveEvent(QMouseEvent *event)
             emit timelineChanged();
             update();
         }
+    } else if (m_isPanning) {
+        int dx = event->pos().x() - m_lastMousePos.x();
+        m_scrollOffset -= dx;
+        if (m_scrollOffset < 0) m_scrollOffset = 0;
+        m_lastMousePos = event->pos();
+        update();
     }
 }
 
@@ -226,7 +239,35 @@ void Timeline::mouseReleaseEvent(QMouseEvent *event)
         m_isDragging = false;
         m_isResizing = false;
         m_dragClipIndex = -1;
+    } else if (event->button() == Qt::MiddleButton) {
+        m_isPanning = false;
+        setCursor(Qt::ArrowCursor);
     }
+}
+
+void Timeline::wheelEvent(QWheelEvent *event)
+{
+    double zoomFactor = 1.15;
+    if (event->angleDelta().y() < 0) {
+        zoomFactor = 1.0 / zoomFactor;
+    }
+
+    double mouseX = event->position().x();
+    double timeAtMouse = pixelToTime(mouseX);
+
+    // Apply zoom
+    m_pixelsPerSecond *= zoomFactor;
+
+    // Limit zoom
+    if (m_pixelsPerSecond < 2.0) m_pixelsPerSecond = 2.0;
+    if (m_pixelsPerSecond > 2000.0) m_pixelsPerSecond = 2000.0;
+
+    // Adjust scroll offset to keep timeAtMouse at mouseX
+    m_scrollOffset = timeAtMouse * m_pixelsPerSecond - mouseX;
+
+    if (m_scrollOffset < 0) m_scrollOffset = 0;
+
+    update();
 }
 
 int Timeline::getClipAtPosition(const QPoint &pos)
@@ -255,12 +296,12 @@ int Timeline::getClipAtPosition(const QPoint &pos)
 
 double Timeline::pixelToTime(int pixel) const
 {
-    return pixel / m_pixelsPerSecond;
+    return (pixel + m_scrollOffset) / m_pixelsPerSecond;
 }
 
 int Timeline::timeToPixel(double time) const
 {
-    return static_cast<int>(time * m_pixelsPerSecond);
+    return static_cast<int>(time * m_pixelsPerSecond - m_scrollOffset);
 }
 
 void Timeline::onAddClipClicked()
