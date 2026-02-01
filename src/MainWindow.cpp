@@ -191,7 +191,7 @@ void MainWindow::endSeek()
     }
 
     const int sliderValue = seekSlider->value();
-    const double position = sliderValue / 1000.0;
+    double position = sliderValue / 1000.0;
     mpv_set_property(mpv, "time-pos", MPV_FORMAT_DOUBLE, &position);
     userSeeking = false;
 }
