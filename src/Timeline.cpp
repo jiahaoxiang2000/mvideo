@@ -2,8 +2,6 @@
 #include <QPainter>
 #include <QMouseEvent>
 #include <QFileDialog>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include <QDebug>
 
 Timeline::Timeline(QWidget *parent)
@@ -25,20 +23,16 @@ Timeline::~Timeline()
 
 void Timeline::setupUI()
 {
-    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    // Don't use a layout - we'll manually position buttons and paint clips
+    // This allows paintEvent to have full control over the widget area
     
-    // Button bar
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
     m_addClipButton = new QPushButton("Add Clip", this);
     m_removeClipButton = new QPushButton("Remove Clip", this);
     m_removeClipButton->setEnabled(false);
     
-    buttonLayout->addWidget(m_addClipButton);
-    buttonLayout->addWidget(m_removeClipButton);
-    buttonLayout->addStretch();
-    
-    mainLayout->addLayout(buttonLayout);
-    mainLayout->addStretch();
+    // Position buttons at the top-left
+    m_addClipButton->move(5, 5);
+    m_removeClipButton->move(m_addClipButton->x() + m_addClipButton->sizeHint().width() + 5, 5);
     
     connect(m_addClipButton, &QPushButton::clicked, this, &Timeline::onAddClipClicked);
     connect(m_removeClipButton, &QPushButton::clicked, this, &Timeline::onRemoveClipClicked);
@@ -90,15 +84,20 @@ double Timeline::totalDuration() const
 
 void Timeline::paintEvent(QPaintEvent *event)
 {
+    Q_UNUSED(event);
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
+    
+    // Button area height (buttons are positioned at y=5, typical button height ~25)
+    int buttonAreaHeight = 35;
     
     // Draw background
     painter.fillRect(rect(), QColor(45, 45, 45));
     
-    // Draw timeline ruler
+    // Draw timeline ruler below button area
+    int rulerY = buttonAreaHeight;
     int rulerHeight = 30;
-    painter.fillRect(0, 0, width(), rulerHeight, QColor(60, 60, 60));
+    painter.fillRect(0, rulerY, width(), rulerHeight, QColor(60, 60, 60));
     
     // Draw time markers
     painter.setPen(QColor(200, 200, 200));
@@ -108,12 +107,13 @@ void Timeline::paintEvent(QPaintEvent *event)
     
     for (int i = 0; i < width(); i += 100) {
         double time = pixelToTime(i);
-        painter.drawLine(i, rulerHeight - 10, i, rulerHeight);
-        painter.drawText(i + 2, rulerHeight - 15, QString::number(time, 'f', 1) + "s");
+        painter.drawLine(i, rulerY + rulerHeight - 10, i, rulerY + rulerHeight);
+        painter.drawText(i + 2, rulerY + rulerHeight - 15, QString::number(time, 'f', 1) + "s");
     }
     
-    // Draw clips
-    painter.translate(0, rulerHeight + 10);
+    // Draw clips below the ruler
+    int clipAreaY = rulerY + rulerHeight + 10;
+    painter.translate(0, clipAreaY);
     for (int i = 0; i < m_clips.size(); ++i) {
         drawClip(painter, m_clips[i], i);
     }
@@ -209,8 +209,13 @@ void Timeline::mouseReleaseEvent(QMouseEvent *event)
 
 int Timeline::getClipAtPosition(const QPoint &pos)
 {
+    int buttonAreaHeight = 35;
     int rulerHeight = 30;
-    if (pos.y() < rulerHeight + 10) {
+    int clipAreaY = buttonAreaHeight + rulerHeight + 10;
+    int clipHeight = 60;
+    
+    // Check if click is in the clip area
+    if (pos.y() < clipAreaY || pos.y() > clipAreaY + clipHeight) {
         return -1;
     }
     
