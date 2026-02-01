@@ -59,14 +59,13 @@ const getOverlayTracks = (tracks: Track[]) =>
 const resolveTextOverlay = (clip: Clip, asset: Asset) => {
   const overlayType = getMetaEnum(asset, "type", textOverlayTypeSchema) ?? "text";
   const text = getMetaString(asset, "text") ?? asset.name ?? "Overlay";
-  const trimStart = clip.trimStartFrame ?? 0;
 
   return {
     id: clip.id,
     type: overlayType,
     text,
-    startFrame: clip.startFrame + trimStart,
-    durationInFrames: clip.durationInFrames - trimStart,
+    startFrame: clip.startFrame,
+    durationInFrames: clip.durationInFrames,
     x: getMetaNumber(asset, "x"),
     y: getMetaNumber(asset, "y"),
     enterDurationInFrames: getMetaNumber(asset, "enterDurationInFrames"),
@@ -75,7 +74,6 @@ const resolveTextOverlay = (clip: Clip, asset: Asset) => {
 };
 
 const resolveImageOverlay = (clip: Clip, asset: Asset) => {
-  const trimStart = clip.trimStartFrame ?? 0;
   return {
     id: clip.id,
     type: "image",
@@ -85,8 +83,8 @@ const resolveImageOverlay = (clip: Clip, asset: Asset) => {
     height: getMetaNumber(asset, "height"),
     objectFit: getMetaEnum(asset, "objectFit", imageObjectFitSchema),
     borderRadius: getMetaNumber(asset, "borderRadius"),
-    startFrame: clip.startFrame + trimStart,
-    durationInFrames: clip.durationInFrames - trimStart,
+    startFrame: clip.startFrame,
+    durationInFrames: clip.durationInFrames,
     x: getMetaNumber(asset, "x"),
     y: getMetaNumber(asset, "y"),
     enterDurationInFrames: getMetaNumber(asset, "enterDurationInFrames"),
@@ -134,7 +132,7 @@ export const resolveProjectToMainCompositionProps = (project: Project) => {
   }
 
   const trimStartInFrames = primaryClip.trimStartFrame ?? 0;
-  const trimEndInFrames = primaryClip.durationInFrames;
+  const trimEndInFrames = trimStartInFrames + primaryClip.durationInFrames;
   const overlays = resolveOverlayItems(project);
 
   return MainCompositionProps.parse({

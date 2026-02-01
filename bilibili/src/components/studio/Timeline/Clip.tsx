@@ -79,8 +79,14 @@ export const Clip: React.FC<ClipProps> = ({
         const newStart = getSnappedFrame(Math.max(0, startFrameRef.current + deltaFrames));
         onMove(newStart);
       } else if (type === "trim-start") {
-        const newTrimStart = Math.max(0, Math.min(startTrimRef.current + deltaFrames, startDurationRef.current - 1));
-        onTrim(startFrameRef.current, startDurationRef.current, newTrimStart);
+        const delta = deltaFrames;
+        const actualDelta = Math.max(-startTrimRef.current, Math.min(delta, startDurationRef.current - 1));
+        
+        const newStartFrame = startFrameRef.current + actualDelta;
+        const newTrimStart = startTrimRef.current + actualDelta;
+        const newDuration = startDurationRef.current - actualDelta;
+        
+        onTrim(newStartFrame, newDuration, newTrimStart);
       } else if (type === "trim-end") {
         const newEnd = getSnappedFrame(startFrameRef.current + startDurationRef.current + deltaFrames);
         const newDuration = Math.max(1, newEnd - startFrameRef.current);
@@ -115,8 +121,8 @@ export const Clip: React.FC<ClipProps> = ({
         isSelected ? "ring-2 ring-white shadow-lg z-10" : "hover:brightness-110"
       } ${isDragging ? "opacity-80 cursor-grabbing" : ""}`}
       style={{
-        left: (clip.startFrame + trimStart) * pixelsPerFrame,
-        width: Math.max((clip.durationInFrames - trimStart) * pixelsPerFrame, 4),
+        left: clip.startFrame * pixelsPerFrame,
+        width: Math.max(clip.durationInFrames * pixelsPerFrame, 4),
       }}
       onPointerDown={(e) => handlePointerDown(e, "move")}
     >
@@ -126,7 +132,7 @@ export const Clip: React.FC<ClipProps> = ({
             src={thumbnailUrl}
             alt={asset?.name ?? clip.id}
             className="h-full object-cover opacity-70"
-            style={{ width: clip.durationInFrames * pixelsPerFrame }}
+            style={{ width: (asset?.durationInFrames ?? (clip.durationInFrames + trimStart)) * pixelsPerFrame }}
             loading="lazy"
           />
           <div className="absolute inset-0 bg-black/30" />
@@ -136,7 +142,7 @@ export const Clip: React.FC<ClipProps> = ({
         <div className="absolute inset-0" style={{ left: -trimStart * pixelsPerFrame }}>
           <Waveform
             assetId={asset?.id ?? clip.assetId}
-            durationInFrames={clip.durationInFrames}
+            durationInFrames={asset?.durationInFrames ?? (clip.durationInFrames + trimStart)}
             pixelsPerFrame={pixelsPerFrame}
           />
         </div>
