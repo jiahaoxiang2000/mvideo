@@ -1,13 +1,22 @@
 import type { NextConfig } from "next";
 
+const isGitHubPages = process.env.GITHUB_ACTIONS === "true";
+const repository = process.env.GITHUB_REPOSITORY ?? "";
+const repositoryName = repository.split("/")[1] ?? "";
+const basePath = isGitHubPages && repositoryName ? `/${repositoryName}` : "";
+
 const nextConfig: NextConfig = {
 	compiler: {
 		removeConsole: process.env.NODE_ENV === "production",
 	},
 	reactStrictMode: true,
 	productionBrowserSourceMaps: true,
-	output: "standalone",
+	output: isGitHubPages ? "export" : "standalone",
+	basePath,
+	assetPrefix: basePath ? `${basePath}/` : undefined,
+	trailingSlash: isGitHubPages,
 	images: {
+		unoptimized: isGitHubPages,
 		remotePatterns: [
 			{
 				protocol: "https",
