@@ -71,10 +71,12 @@ export async function collectAudioElements({
 		if (canTracktHaveAudio(track) && track.muted) continue;
 
 		for (const element of track.elements) {
-			if (element.type !== "audio") continue;
+			if (!canElementHaveAudio(element)) continue;
 			if (element.duration <= 0) continue;
 
 			const isTrackMuted = canTracktHaveAudio(track) && track.muted;
+			const isElementMuted =
+				"muted" in element ? (element.muted ?? false) : false;
 			pendingElements.push(
 				resolveAudioBufferForElement({
 					element,
@@ -88,7 +90,7 @@ export async function collectAudioElements({
 						duration: element.duration,
 						trimStart: element.trimStart,
 						trimEnd: element.trimEnd,
-						muted: element.muted || isTrackMuted,
+						muted: isElementMuted || isTrackMuted,
 					};
 				}),
 			);
@@ -108,11 +110,19 @@ async function resolveAudioBufferForElement({
 	mediaMap,
 	audioContext,
 }: {
-	element: AudioElement;
+	element: TimelineElement;
 	mediaMap: Map<string, MediaAsset>;
 	audioContext: AudioContext;
 }): Promise<AudioBuffer | null> {
 	try {
+		if (element.type === "video") {
+			const asset = mediaMap.get(element.mediaId);
+			if (!asset || !mediaSupportsAudio({ media: asset })) return null;
+
+			const arrayBuffer = await asset.file.arrayBuffer();
+			return await audioContext.decodeAudioData(arrayBuffer.slice(0));
+		}
+
 		if (element.sourceType === "upload") {
 			const asset = mediaMap.get(element.mediaId);
 			if (!asset || asset.type !== "audio") return null;
