@@ -13,16 +13,12 @@ import Link from "next/link";
 import { RenameProjectDialog } from "./dialogs/rename-project-dialog";
 import { DeleteProjectDialog } from "./dialogs/delete-project-dialog";
 import { useRouter } from "next/navigation";
-import { FaDiscord } from "react-icons/fa6";
 import { ExportButton } from "./export-button";
 import { ThemeToggle } from "../theme-toggle";
-import { DEFAULT_LOGO_URL, SOCIAL_LINKS } from "@/constants/site-constants";
+import { SOCIAL_LINKS } from "@/constants/site-constants";
 import { toast } from "sonner";
 import { useEditor } from "@/hooks/use-editor";
-import { CommandIcon, Logout05Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
 import { ShortcutsDialog } from "./dialogs/shortcuts-dialog";
-import Image from "next/image";
 import { cn } from "@/utils/ui";
 
 export function EditorHeader() {
@@ -108,35 +104,22 @@ function ProjectDropdown() {
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" size="icon" className="p-1 rounded-sm size-8">
-						<Image
-							src={DEFAULT_LOGO_URL}
-							alt="Project thumbnail"
-							width={32}
-							height={32}
-							className="invert dark:invert-0 size-5"
-						/>
+					<Button variant="ghost" className="h-8 rounded-sm px-2 text-sm">
+						Menu
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="start" className="z-100 w-44">
-					<DropdownMenuItem
-						onClick={handleExit}
-						disabled={isExiting}
-						icon={<HugeiconsIcon icon={Logout05Icon} />}
-					>
+					<DropdownMenuItem onClick={handleExit} disabled={isExiting}>
 						Exit project
 					</DropdownMenuItem>
 
-					<DropdownMenuItem
-						onClick={() => setOpenDialog("shortcuts")}
-						icon={<HugeiconsIcon icon={CommandIcon} />}
-					>
+					<DropdownMenuItem onClick={() => setOpenDialog("shortcuts")}>
 						Shortcuts
 					</DropdownMenuItem>
 
 					<DropdownMenuSeparator />
 
-					<DropdownMenuItem asChild icon={<FaDiscord className="!size-4" />}>
+					<DropdownMenuItem asChild>
 						<Link
 							href={SOCIAL_LINKS.discord}
 							target="_blank"
