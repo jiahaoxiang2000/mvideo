@@ -76,6 +76,9 @@ const VIEW_MODE_OPTIONS = [
 	{ mode: "list" as const, icon: LeftToRightListDashIcon, label: "List view" },
 ];
 
+const getEditorHref = ({ projectId }: { projectId: string }) =>
+	`/editor?project_id=${encodeURIComponent(projectId)}`;
+
 export default function ProjectsPage() {
 	const { searchQuery, sortKey, sortOrder, viewMode } = useProjectsStore();
 	const editor = useEditor();
@@ -502,7 +505,7 @@ function NewProjectButton() {
 		const projectId = await editor.project.createNewProject({
 			name: "New project",
 		});
-		router.push(`/editor/${projectId}`);
+		router.push(getEditorHref({ projectId }));
 	};
 
 	return (
@@ -639,7 +642,7 @@ function ProjectItem({
 				className="size-5 shrink-0"
 			/>
 
-			<Link href={`/editor/${project.id}`} className="flex-1 min-w-0">
+			<Link href={getEditorHref({ projectId: project.id })} className="flex-1 min-w-0">
 				{listRowContent}
 			</Link>
 
@@ -662,7 +665,7 @@ function ProjectItem({
 
 	return (
 		<div className="group relative">
-			<Link href={`/editor/${project.id}`} className="block">
+			<Link href={getEditorHref({ projectId: project.id })} className="block">
 				{cardContent}
 			</Link>
 
@@ -882,7 +885,7 @@ function EmptyState() {
 			const projectId = await editor.project.createNewProject({
 				name: "New project",
 			});
-			router.push(`/editor/${projectId}`);
+			router.push(getEditorHref({ projectId }));
 		} catch (error) {
 			toast.error("Failed to create project", {
 				description:
