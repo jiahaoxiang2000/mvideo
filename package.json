@@ -1,0 +1,21 @@
+{
+	"name": "mvideo",
+	"packageManager": "bun@1.2.18",
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"scripts": {
+		"dev:web": "turbo run dev --filter=mvideo-web",
+		"build:web": "turbo run build --filter=mvideo-web",
+		"lint:web": "biome lint apps/web/src --max-diagnostics=1000",
+		"lint:web:fix": "biome lint apps/web/src --write --max-diagnostics=1000",
+		"format:web": "biome format apps/web/src --write --max-diagnostics=1000",
+		"test": "bun test"
+	},
+	"devDependencies": {
+		"turbo": "^2.7.5",
+		"typescript": "5.8.3",
+		"@biomejs/biome": "^2.1.2"
+	}
+}

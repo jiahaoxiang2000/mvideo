@@ -1,127 +1,17 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Virtual environments
-.venv/
-venv/
-ENV/
-env/
+# asdf version management
+.tool-versions
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
+node_modules
+.cursorignore
+.turbo
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
+.env*
+!*.env.example
 
-# Linting/Formatting
-.ruff_cache/
-.mypy_cache/
+# cursor
+bun.lockb
 
-# Temporary files
-*.tmp
-*.temp
-temp_*.wav
-temp_*.mp3
-temp_*.mp4
-
-# Node.js
-node_modules/
-package-lock.json
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Next.js
-.next/
-out/
-build/
-
-# Production
-dist/
-
-# Vercel
-.vercel/
-
-# Turborepo
-.turbo/
-
-# Testing
-coverage/
-
-# Environment variables (add more variations)
-.env*.local
-
-# OS
-.DS_Store
-Thumbs.db
-
-# uv
-uv.lock
-bilibili/storage/
-
-# C++ / CMake
-*.o
-*.a
-*.so
-*.dylib
-*.dll
-*.exe
-*.out
-*.app
-*.dSYM/
-*.dir/
-
-# CMake build directory
-build/
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-CMakeScripts/
-*.cmake
-*.txt
-
-# Qt
-moc_*/
-qrc_*/
-ui_*.h
-*.qmlc
-*.pdb
-
-# Debug/Release builds
-Debug/
-Release/
-x64/
-x86/
-obj/
-bin/
-lib/
-.cache/clangd/index
+# Twiggy
+.cursor/rules/file-structure.mdc
