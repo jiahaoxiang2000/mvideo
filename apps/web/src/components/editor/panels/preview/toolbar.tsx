@@ -11,7 +11,7 @@ import {
 	PlayIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { OcSocialIcon } from "@mvideo/ui/icons";
+import { OcSocialIcon } from "mvideo-ui/icons";
 import { Separator } from "@/components/ui/separator";
 
 export function PreviewToolbar({

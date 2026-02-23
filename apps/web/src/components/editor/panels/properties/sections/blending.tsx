@@ -6,7 +6,7 @@ import {
 	DEFAULT_BLEND_MODE,
 	DEFAULT_OPACITY,
 } from "@/constants/timeline-constants";
-import { OcCheckerboardIcon } from "@mvideo/ui/icons";
+import { OcCheckerboardIcon } from "mvideo-ui/icons";
 import { Fragment, useRef } from "react";
 import { Section, SectionContent, SectionHeader } from "../section";
 import {

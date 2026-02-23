@@ -1,6 +1,9 @@
 import { SITE_URL } from "@/constants/site-constants";
 import type { MetadataRoute } from "next";
 
+export const dynamic = "force-static";
+export const revalidate = false;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	return [
 		{

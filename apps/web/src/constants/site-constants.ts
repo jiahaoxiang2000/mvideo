@@ -1,4 +1,4 @@
-import { OcDataBuddyIcon, OcMarbleIcon } from "@mvideo/ui/icons";
+import { OcDataBuddyIcon, OcMarbleIcon } from "mvideo-ui/icons";
 
 export const SITE_URL = "https://mvideo.app";
 

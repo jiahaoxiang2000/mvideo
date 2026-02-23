@@ -7,7 +7,7 @@ import {
 	TextIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { OcVideoIcon } from "@mvideo/ui/icons";
+import { OcVideoIcon } from "mvideo-ui/icons";
 
 export const DEFAULT_TRANSFORM: Transform = {
 	scale: 1,
